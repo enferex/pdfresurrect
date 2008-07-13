@@ -1,0 +1,28 @@
+pdfresurrect
+------------
+
+PDFResurrect is a tool aimed at analyzing PDF documents.  The PDF format allows for previous document changes to be retained in a more recent version of the document, thereby creating a running history of changes for the document.  This tool attempts to extract all previous versions while also producing a summary of changes between versions.
+
+
+Building
+--------
+
+From the top-level directory of pdfresurrect run:
+    ./configure
+    make
+
+Debugging mode can be enabled when configuring by using the following option:
+    ./configure --enable-debug
+
+The resulting binary can be placed anywhere, as there is no "install" target in the makefile.
+
+
+Thanks
+------
+The rest of 757labs (757labs.com)
+GNU (gnu.org)
+
+
+Contact
+-------
+mattdavis9@gmail.com

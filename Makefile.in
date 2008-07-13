@@ -1,0 +1,21 @@
+APP = pdfresurrect
+OBJS = main.o pdf.o
+CC = @CC@
+CFLAGS = @CFLAGS@
+
+all: $(OBJS) $(APP)
+
+$(APP): $(OBJS)
+	$(CC) -o $@ $(OBJS) $(CFLAGS)
+
+%.o: %.c
+	$(CC) -o $@ -c $< $(CFLAGS)
+
+clean:
+	rm -rfv $(OBJS) $(APP)
+
+backup:
+	$(MAKE) clean
+	cp -r ../$(APP) ../$(APP)-`date --iso`
+	tar -czf ../$(APP)-`date --iso`.tar.gz ../$(APP)-`date --iso`
+	rm -rf ../$(APP)-`date --iso`
