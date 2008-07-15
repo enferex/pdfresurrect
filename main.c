@@ -53,11 +53,10 @@ static void write_version(
     FILE       *fp,
     const char *fname,
     const char *dirname,
-    int         version,
     xref_t     *xref)
 {
-    long  start;
-    char *c, *xref_buf, *new_fname, data;
+    long  start, end, startxref, pos, pos_count;
+    char *c, *xref_buf, *new_fname, data, peek;
     FILE *new_fp;
     
     start = ftell(fp);
@@ -67,7 +66,7 @@ static void write_version(
       *c = '\0';
     new_fname = malloc(strlen(fname) + strlen(dirname) + 16);
     snprintf(new_fname, strlen(fname) + strlen(dirname) + 16,
-             "%s/%s-version-%d.pdf", dirname, fname, version);
+             "%s/%s-version-%d.pdf", dirname, fname, xref->version);
 
     if (!(new_fp = fopen(new_fname, "w")))
     {
@@ -80,14 +79,21 @@ static void write_version(
     /* Copy original PDF */
     fseek(fp, 0, SEEK_SET);
     while (fread(&data, 1, 1, fp))
-     fwrite(&data, 1, 1, new_fp);
+      fwrite(&data, 1, 1, new_fp);
+    fprintf(new_fp, "\r\n");
 
-    fputc('\n', new_fp);
+    /* Go backwards till we hit the end of 'startxref' */
+    fseek(fp, xref->end, SEEK_SET);
+    pos = xref->end;
+    pos_count = 0;
+    while ((peek = fgetc(fp) != 'f'))
+      fseek(fp, pos - (++pos_count), SEEK_SET);
+    end = ftell(fp);
 
     /* Suck in xref to copy */
     fseek(fp, xref->start, SEEK_SET);
-    xref_buf = malloc(xref->end - xref->start);
-    if (!(fread(xref_buf, xref->end - xref->start, 1, fp)))
+    xref_buf = malloc(end - xref->start);
+    if (!(fread(xref_buf, end - xref->start, 1, fp)))
     {
         ERR("Could not read %d bytes from document\n",
              (int)(xref->end - xref->start));
@@ -98,15 +104,15 @@ static void write_version(
         return;
     }
 
-    /* Append that copy */
-    fseek(fp, 0, SEEK_END);
-    if (!(fwrite(xref_buf, xref->end - xref->start, 1, new_fp)))
+    /* Append that copy (ending at 'startxref') */
+    startxref = ftell(new_fp);
+    if (!(fwrite(xref_buf, end - xref->start, 1, new_fp)))
     {
         ERR("Could not write %d bytes to document\n",
-            (int)(xref->end - xref->start));
+            (int)(end - xref->start));
     }
-    
-    fprintf(new_fp, "\n%%%%EOF");
+
+    fprintf(new_fp, "\r\n%ld\r\n%%%%EOF", startxref);
 
     /* Clean */
     fclose(new_fp);
@@ -219,9 +225,9 @@ int main(int argc, char **argv)
         }
     
         /* Write the pdf as a pervious version */
-        for (i=0, n_valid=0; i<pdf->n_xrefs; i++)
+        for (i=0; i<pdf->n_xrefs; i++)
           if (pdf->xrefs[i].version)
-            write_version(fp, name, dname, ++n_valid, &pdf->xrefs[i]);
+            write_version(fp, name, dname, &pdf->xrefs[i]);
     }
 
     /* Generate a per-object summary */

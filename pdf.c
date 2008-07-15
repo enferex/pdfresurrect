@@ -627,6 +627,9 @@ static const char *get_type(FILE *fp, int obj_id, const xref_t *xref)
 
 static int get_page(int obj_id, const xref_t *xref)
 {
+    /* TODO */
+    return 0;
+    /*
     int i;
 
     for (i=0; i<xref->n_kids; i++)
@@ -634,7 +637,5 @@ static int get_page(int obj_id, const xref_t *xref)
         break;
 
     return i;
+    */
 }
-
-
-
