@@ -43,7 +43,8 @@ static void usage(void)
     printf("-- " EXEC_NAME " v" VER" --\n"
            "Usage: ./" EXEC_NAME " <file.pdf> [-w] [-q]\n"
            "\t -w Write the PDF versions and summary to disk.\n"
-           "\t -q Display only the number of versions contained in the PDF\n");
+           "\t -q Display only the number of versions contained in the PDF\n"
+           "\t -s Scrub the previous history data from the specified PDF\n");
 
     _Exit(0);
 }
@@ -122,6 +123,83 @@ static void write_version(
 }
 
 
+static void scrub_document(FILE *fp, const pdf_t *pdf)
+{
+    FILE *new_fp;
+    int   ch, i, j, last_version ;
+    char *new_name, *c;
+    const char *suffix = "-scrubbed.pdf";
+
+    /* Create a new name */
+    if (!(new_name = malloc(strlen(pdf->name) + strlen(suffix) + 1)))
+    {
+        ERR("Insufficient memory to create scrubbed file name\n");
+        return;
+    }
+
+    strcpy(new_name, pdf->name);
+    if ((c = strrchr(new_name, '.')))
+      *c = '\0';
+    strcat(new_name, suffix);
+
+    if ((new_fp = fopen(new_name, "r")))
+    {
+        ERR("File name already exists for saving scrubbed document\n");
+        free(new_name);
+        fclose(new_fp);
+        return;
+    }
+
+    if (!(new_fp = fopen(new_name, "w+")))
+    {
+        ERR("Could not create file for saving scrubbed document\n");
+        free(new_name);
+        fclose(new_fp);
+        return;
+    }
+
+    /* Copy */
+    fseek(fp, SEEK_SET, 0);
+    while ((ch = fgetc(fp)) != EOF)
+      fputc(ch, new_fp); 
+
+    /* Find last version (dont zero these baddies) */
+    last_version = 0;
+    for (i=0; i<pdf->n_xrefs; i++)
+      if (pdf->xrefs[i].version)
+        last_version = pdf->xrefs[i].version;
+   
+    /* Zero mod/deleted objects from all versions except most recent */
+    fseek(new_fp, 0, SEEK_SET);
+    for (i=0; i<pdf->n_xrefs; i++)
+    {
+        if (pdf->xrefs[i].version == last_version)
+          break;
+
+        for (j=0; j<pdf->xrefs[i].n_entries; j++)
+          if (!pdf->xrefs[i].entries[j].obj_id)
+            continue;
+          else
+          {
+              switch (pdf_get_object_status(pdf, i, j))
+              {
+                  case 'M':
+                  case 'D':
+                      pdf_zero_object(new_fp, pdf, i, j);
+                      break;
+
+                  default:
+                      break;
+              }
+          }
+    }
+
+    /* Clean */
+    free(new_name);
+    fclose(new_fp);
+}
+
+
 static pdf_t *init_pdf(FILE *fp, const char *name)
 {
     pdf_t *pdf;
@@ -136,7 +214,7 @@ static pdf_t *init_pdf(FILE *fp, const char *name)
 
 int main(int argc, char **argv)
 {
-    int         i, n_valid, do_write;
+    int         i, n_valid, do_write, do_scrub;
     char       *c, *dname, *name;
     DIR        *dir;
     FILE       *fp;
@@ -147,7 +225,7 @@ int main(int argc, char **argv)
       usage();
 
     /* Args */
-    do_write = flags = 0;
+    do_write = do_scrub = flags = 0;
     name = NULL;
     for (i=1; i<argc; i++)
     {
@@ -155,6 +233,8 @@ int main(int argc, char **argv)
           do_write = 1;
         else if (strncmp(argv[i], "-q", 2) == 0)
           flags |= PDF_FLAG_QUIET;
+        else if (strncmp(argv[i], "-s", 2) == 0)
+          do_scrub = 1;
         else if (argv[i][0] != '-')
           name = argv[i];
         else if (argv[i][0] == '-')
@@ -194,6 +274,7 @@ int main(int argc, char **argv)
         if (!(flags & PDF_FLAG_QUIET))
           printf("%s: There is only one version of this PDF\n", pdf->name);
 
+        do_scrub = 0;
         if (do_write)
         {
             fclose(fp);
@@ -232,6 +313,10 @@ int main(int argc, char **argv)
 
     /* Generate a per-object summary */
     pdf_summarize(fp, pdf, dname, flags);
+
+    /* Have we been summoned to scrub history from this PDF */
+    if (do_scrub)
+      scrub_document(fp, pdf);
 
     fclose(fp);
     free(dname);

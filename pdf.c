@@ -43,11 +43,6 @@ static char *get_object(
 static void add_kid(int id, xref_t *xref);
 static void load_kids(FILE *fp, int pages_id, xref_t *xref);
 
-static char get_status(
-    const pdf_t *pdf,
-    int          xref_idx,
-    int          entry_idx);
-
 static const char *get_type(FILE *fp, int obj_id, const xref_t *xref);
 static int get_page(int obj_id, const xref_t *xref);
 
@@ -233,6 +228,74 @@ void pdf_load_pages_kids(FILE *fp, pdf_t *pdf)
 }
 
 
+char pdf_get_object_status(
+    const pdf_t *pdf,
+    int          xref_idx,
+    int          entry_idx)
+{
+    int           i, j;
+    xref_entry_t *prev, *curr;
+
+    curr = &pdf->xrefs[xref_idx].entries[entry_idx];
+
+    /* Deleted (freed) */
+    if (curr->f_or_n == 'f')
+      return 'D';
+
+    /* Get previous entry */
+    prev = NULL;
+    for (i=xref_idx-1; i>-1; i--)
+    {
+        for (j=0; j<pdf->xrefs[i].n_entries; j++)
+        {
+            if (pdf->xrefs[i].entries[j].obj_id == curr->obj_id)
+            {
+                prev = &pdf->xrefs[i].entries[j];
+                break;
+            }
+        }
+    }
+
+    /* Added in place of a previously freed id */
+    if (!prev || ((prev->f_or_n == 'f') && (curr->f_or_n == 'n')))
+      return 'A';
+
+    /* Modified */
+    else if (prev->offset != curr->offset)
+      return 'M';
+    
+    return '?';
+}
+
+
+void pdf_zero_object(
+    FILE        *fp,
+    const pdf_t *pdf,
+    int          xref_idx,
+    int          entry_idx)
+{
+    int           i, is_stream;
+    char         *obj;
+    size_t        obj_sz;
+    xref_entry_t *entry;
+
+    entry = &pdf->xrefs[xref_idx].entries[entry_idx];
+    fseek(fp, entry->offset, SEEK_SET);
+
+    /* Get object and size */
+    obj = get_object(fp, entry->obj_id, &pdf->xrefs[xref_idx], &is_stream);
+    i = obj_sz = 0;
+    while (obj[++i] != '\0')
+      ++obj_sz;
+
+    /* Zero object */
+    for (i=0; i<obj_sz; i++)
+      fputc('0', fp);
+
+    free(obj);
+}
+
+
 /* Output information per version */
 void pdf_summarize(
     FILE        *fp,
@@ -285,7 +348,7 @@ void pdf_summarize(
                 fprintf(out,
                         "%s: --%c-- Version %d -- Object %d (%s)",
                         pdf->name,
-                        get_status(pdf, i, j),
+                        pdf_get_object_status(pdf, i, j),
                         pdf->xrefs[i].version,
                         pdf->xrefs[i].entries[j].obj_id,
                         get_type(fp, pdf->xrefs[i].entries[j].obj_id,
@@ -464,7 +527,7 @@ static char *get_object(
         }
         else if (strstr(data, "stream"))
         {
-            *is_stream = 1;
+            *is_stream = total_sz;
             return data;
         }
     }
@@ -526,44 +589,7 @@ static void load_kids(FILE *fp, int pages_id, xref_t *xref)
 }
 
 
-static char get_status(
-    const pdf_t *pdf,
-    int          xref_idx,
-    int          entry_idx)
-{
-    int           i, j;
-    xref_entry_t *prev, *curr;
 
-    curr = &pdf->xrefs[xref_idx].entries[entry_idx];
-
-    /* Deleted (freed) */
-    if (curr->f_or_n == 'f')
-      return 'D';
-
-    /* Get previous entry */
-    prev = NULL;
-    for (i=xref_idx-1; i>-1; i--)
-    {
-        for (j=0; j<pdf->xrefs[i].n_entries; j++)
-        {
-            if (pdf->xrefs[i].entries[j].obj_id == curr->obj_id)
-            {
-                prev = &pdf->xrefs[i].entries[j];
-                break;
-            }
-        }
-    }
-
-    /* Added in place of a previously freed id */
-    if (!prev || ((prev->f_or_n == 'f') && (curr->f_or_n == 'n')))
-      return 'A';
-
-    /* Modified */
-    else if (prev->offset != curr->offset)
-      return 'M';
-    
-    return '?';
-}
 
 
 static const char *get_type(FILE *fp, int obj_id, const xref_t *xref)

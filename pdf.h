@@ -75,6 +75,17 @@ extern int pdf_is_pdf(FILE *fp);
 extern int pdf_load_xrefs(FILE *fp, pdf_t *pdf);
 extern void pdf_load_pages_kids(FILE *fp, pdf_t *pdf);
 
+extern char pdf_get_object_status(
+    const pdf_t *pdf,
+    int          xref_idx,
+    int          entry_idx);
+
+extern void pdf_zero_object(
+    FILE        *fp,
+    const pdf_t *pdf,
+    int          xref_idx,
+    int          entry_idx);
+
 void pdf_summarize(
     FILE        *fp,
     const pdf_t *pdf,
