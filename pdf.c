@@ -274,7 +274,7 @@ void pdf_zero_object(
     int          xref_idx,
     int          entry_idx)
 {
-    int           i, is_stream;
+    int           i;
     char         *obj;
     size_t        obj_sz;
     xref_entry_t *entry;
@@ -283,10 +283,13 @@ void pdf_zero_object(
     fseek(fp, entry->offset, SEEK_SET);
 
     /* Get object and size */
-    obj = get_object(fp, entry->obj_id, &pdf->xrefs[xref_idx], &is_stream);
+    obj = get_object(fp, entry->obj_id, &pdf->xrefs[xref_idx], NULL);
     i = obj_sz = 0;
-    while (obj[++i] != '\0')
+    while (strncmp((++i)+obj, "endobj", 6))
       ++obj_sz;
+
+    if (obj_sz)
+      obj_sz += strlen("endobj") + 1;
 
     /* Zero object */
     for (i=0; i<obj_sz; i++)
@@ -453,7 +456,7 @@ static void load_xref_entries(FILE *fp, xref_t *xref)
             xref->entries[i].obj_id = obj_id++;
             xref->entries[i].offset = atol(strtok(buf, " "));
             xref->entries[i].gen_num = atoi(strtok(NULL, " "));
-            xref->entries[i].f_or_n = buf[buf_idx - 1];
+            xref->entries[i].f_or_n = buf[17];
             ++added_entries;
         }
         else
@@ -468,9 +471,6 @@ static void load_xref_entries(FILE *fp, xref_t *xref)
 }
 
 
-/* XXX: Only returns a partial (not complete) object if a stream is 
- * encountered
- */
 static char *get_object(
     FILE         *fp,
     int           obj_id,
@@ -478,13 +478,14 @@ static char *get_object(
     int          *is_stream)
 {
     static const int    blk_sz = 256;
-    int                 i, total_sz, read_sz, n_blks, search;
+    int                 i, total_sz, read_sz, n_blks, search, stream;
     char               *c, *data;
     long                start;
     const xref_entry_t *entry;
 
     start = ftell(fp);
-    *is_stream = 0;
+    if (is_stream)
+      *is_stream = 0;
 
     /* Find object */
     entry = NULL;
@@ -508,6 +509,7 @@ static char *get_object(
     memset(data, 0, blk_sz * n_blks);
 
     /* Suck in data */
+    stream = 0;
     while ((read_sz = fread(data+total_sz, 1, blk_sz-1, fp)) && !ferror(fp))
     {
         total_sz += read_sz;
@@ -516,19 +518,25 @@ static char *get_object(
         if (total_sz + blk_sz >= (blk_sz * n_blks))
           data = realloc(data, blk_sz * (++n_blks));
 
-        search = total_sz - read_sz - strlen("endobj");
+        search = total_sz - read_sz;
         if (search < 0)
           search = 0;
 
-        if ((c = strstr(data + search, "endobj")))
+        if (!stream && (c = strstr(data + search, "endobj")))
         {
             *(c + strlen("endobj") + 1) = '\0';
             break;
         }
+        else if (stream && (c = strstr(data + search, "endstream")))
+        {
+            *(c + strlen("endstream") + 1) = '\0';
+            break;
+        }
         else if (strstr(data, "stream"))
         {
-            *is_stream = total_sz;
-            return data;
+            if (is_stream)
+              *is_stream = 1;
+            stream = 1;
         }
     }
 
@@ -587,9 +595,6 @@ static void load_kids(FILE *fp, int pages_id, xref_t *xref)
 
     free(data);
 }
-
-
-
 
 
 static const char *get_type(FILE *fp, int obj_id, const xref_t *xref)

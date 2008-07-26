@@ -32,7 +32,8 @@
 
 static void usage(void)
 {
-    printf(EXEC_NAME " Copyright (C) 2008 Matt Davis\n"
+    printf(EXEC_NAME " Copyright (C) 2008 Matt Davis \n"
+           "(enferex) of 757labs (www.757labs.com)\n"
            "This program comes with ABSOLUTELY NO WARRANTY\n"
            "This is free software, and you are welcome to redistribute it\n"
            "under certain conditions.  For details see the file 'LICENSE'\n"
@@ -169,13 +170,12 @@ static void scrub_document(FILE *fp, const pdf_t *pdf)
       if (pdf->xrefs[i].version)
         last_version = pdf->xrefs[i].version;
    
-    /* Zero mod/deleted objects from all versions except most recent */
+    /* Zero mod objects from all but the most recent version
+     * Zero del objects from all versions
+     */
     fseek(new_fp, 0, SEEK_SET);
     for (i=0; i<pdf->n_xrefs; i++)
     {
-        if (pdf->xrefs[i].version == last_version)
-          break;
-
         for (j=0; j<pdf->xrefs[i].n_entries; j++)
           if (!pdf->xrefs[i].entries[j].obj_id)
             continue;
@@ -184,6 +184,10 @@ static void scrub_document(FILE *fp, const pdf_t *pdf)
               switch (pdf_get_object_status(pdf, i, j))
               {
                   case 'M':
+                      if (pdf->xrefs[i].version != last_version)
+                        pdf_zero_object(new_fp, pdf, i, j);
+                      break;
+
                   case 'D':
                       pdf_zero_object(new_fp, pdf, i, j);
                       break;
@@ -274,7 +278,6 @@ int main(int argc, char **argv)
         if (!(flags & PDF_FLAG_QUIET))
           printf("%s: There is only one version of this PDF\n", pdf->name);
 
-        do_scrub = 0;
         if (do_write)
         {
             fclose(fp);
@@ -289,6 +292,9 @@ int main(int argc, char **argv)
         /* Create directory to place the various versions in */
         if ((c = strrchr(name, '/')))
           name = c + 1;
+
+        if ((c = strrchr(name, '.')))
+          *c = '\0';
 
         dname = malloc(strlen(name) + 16);
         sprintf(dname, "%s-versions", name);
