@@ -38,7 +38,7 @@ static void usage(void)
            "This is free software, and you are welcome to redistribute it\n"
            "under certain conditions.  For details see the file 'LICENSE'\n"
            "that came with this software or visit:\n"
-           "<http://www.gnu.prg/licenses/gpl-3.0.txt>\n\n");
+           "<http://www.gnu.org/licenses/gpl-3.0.txt>\n\n");
     
      
     printf("-- " EXEC_NAME " v" VER" --\n"
