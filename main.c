@@ -43,7 +43,7 @@ static void usage(void)
      
     printf("-- " EXEC_NAME " v" VER" --\n"
            "Usage: ./" EXEC_NAME " <file.pdf> [-w] [-q]\n"
-           "\t -w Write the PDF versions and summary to disk.\n"
+           "\t -w Write the PDF versions and summary to disk\n"
            "\t -q Display only the number of versions contained in the PDF\n"
            "\t -s Scrub the previous history data from the specified PDF\n");
 
