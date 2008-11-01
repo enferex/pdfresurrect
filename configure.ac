@@ -19,7 +19,7 @@ AC_C_CONST
 CFLAGS="-Wall"
 AC_ARG_ENABLE([debug],
               [AC_HELP_STRING([--enable-debug], [Enable debugging output])],
-              [CFLAGS="$CFLAGS -g3"],
+              [CFLAGS="$CFLAGS -g3 -DDEBUG"],
               [CFLAGS="$CFLAGS -O3"])
 
 AC_SUBST(CFLAGS)

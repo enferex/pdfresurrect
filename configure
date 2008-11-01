@@ -3728,7 +3728,7 @@ fi
 CFLAGS="-Wall"
 # Check whether --enable-debug was given.
 if test "${enable_debug+set}" = set; then
-  enableval=$enable_debug; CFLAGS="$CFLAGS -g3"
+  enableval=$enable_debug; CFLAGS="$CFLAGS -g3 -DDEBUG"
 else
   CFLAGS="$CFLAGS -O3"
 fi
