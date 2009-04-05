@@ -31,8 +31,12 @@
  * Forwards
  */
 
-static int is_valid_xref(FILE *fp, const xref_t *xref);
+static int is_valid_xref(FILE *fp, xref_t *xref);
 static void load_xref_entries(FILE *fp, xref_t *xref);
+static void load_xref_from_plaintext(FILE *fp, xref_t *xref);
+static void load_xref_from_stream(FILE *fp, xref_t *xref);
+
+static char *get_object_from_here(FILE *fp, int *is_stream);
 
 static char *get_object(
     FILE         *fp,
@@ -108,8 +112,8 @@ int pdf_is_pdf(FILE *fp)
 
 int pdf_load_xrefs(FILE *fp, pdf_t *pdf)
 {
-    long pos;
-    int  i, ver, pos_count;
+    long pos, pos_count;
+    int  i, ver;
     char x, *c, buf[256];
     
     c = NULL;
@@ -169,7 +173,7 @@ int pdf_load_xrefs(FILE *fp, pdf_t *pdf)
         }
         else
           pdf->xrefs[i].version = ver++;
-   
+
         /*  Load the entries from the xref */
         load_xref_entries(fp, &pdf->xrefs[i]);
     }
@@ -393,21 +397,50 @@ void pdf_summarize(
 }
 
 
-static int is_valid_xref(FILE *fp, const xref_t *xref)
+/* Checks if the xref is valid and sets 'is_stream' flag if the xref is a
+ * stream (PDF 1.5 or higher) */
+static int is_valid_xref(FILE *fp, xref_t *xref)
 {
-    long start;
-    char buf[16];
+    int   is_stream, is_valid;
+    long  start;
+    char *c, buf[16];
 
+    is_valid = 0;
     start = ftell(fp);
     fseek(fp, xref->start, SEEK_SET);
     fgets(buf, 16, fp);
-    fseek(fp, start, SEEK_SET);
 
-    return (strncmp(buf, "xref", strlen("xref")) == 0);
+    if (strncmp(buf, "xref", strlen("xref")) == 0)
+      is_valid = 1;
+
+    /* PDF v1.5 + allows for xref data to be stored in streams vs plaintext */
+    else
+    {  
+        fseek(fp, xref->start, SEEK_SET);
+        c = get_object_from_here(fp, &is_stream);
+
+        if (c && is_stream)
+        {
+            free(c);
+            is_valid = 1;
+        }
+    }
+
+    fseek(fp, start, SEEK_SET);
+    return is_valid;
 }
 
 
 static void load_xref_entries(FILE *fp, xref_t *xref)
+{
+    if (xref->is_stream)
+      load_xref_from_stream(fp, xref);
+    else
+      load_xref_from_plaintext(fp, xref);
+}
+
+
+static void load_xref_from_plaintext(FILE *fp, xref_t *xref)
 {
     int  i, buf_idx, obj_id, added_entries;
     char c, buf[21];
@@ -468,6 +501,65 @@ static void load_xref_entries(FILE *fp, xref_t *xref)
 
     xref->n_entries = added_entries;
     fseek(fp, start, SEEK_SET);
+}
+
+
+/* Load an xref table from a stream (PDF v1.5 +) */
+static void load_xref_from_stream(FILE *fp, xref_t *xref)
+{
+    long  start;
+    int   is_stream;
+    char *stream;
+
+    start = ftell(fp);
+    fseek(fp, xref->start, SEEK_SET);
+
+    stream = get_object_from_here(fp, &is_stream);
+
+    fseek(fp, start, SEEK_SET);
+
+    if (!stream || !is_stream)
+      return;
+
+    /* TODO: decode and analyize stream */
+    return;
+}
+
+
+/* Returns object data at the start of the file pointer
+ * This interfaces to 'get_object'
+ */
+static char *get_object_from_here(FILE *fp, int *is_stream)
+{
+    long         start;
+    char         buf[256];
+    int          obj_id;
+    xref_t       xref;
+    xref_entry_t entry;
+
+    start = ftell(fp);
+
+    /* Object ID */
+    memset(buf, 0, 256);
+    fread(buf, 255, 1, fp);
+    if (!(obj_id = atoi(buf)))
+    {
+        fseek(fp, start, SEEK_SET);
+        return NULL;
+    }
+    
+    /* Create xref entry to pass to the get_object routine */
+    memset(&entry, 0, sizeof(xref_entry_t));
+    entry.obj_id = obj_id;
+    entry.offset = start;
+
+    /* Xref and single entry for the object we want data from */
+    memset(&xref, 0, sizeof(xref_t));
+    xref.n_entries = 1;
+    xref.entries = &entry;
+
+    fseek(fp, start, SEEK_SET);
+    return get_object(fp, obj_id, &xref, is_stream);
 }
 
 

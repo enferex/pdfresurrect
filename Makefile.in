@@ -2,11 +2,12 @@ APP = pdfresurrect
 OBJS = main.o pdf.o
 CC = @CC@
 CFLAGS = @CFLAGS@
+CLIBS = @CLIBS@
 
 all: $(OBJS) $(APP)
 
 $(APP): $(OBJS)
-	$(CC) -o $@ $(OBJS) $(CFLAGS)
+	$(CC) -o $@ $(OBJS) $(CFLAGS) $(CLIBS)
 
 %.o: %.c
 	$(CC) -o $@ -c $< $(CFLAGS)

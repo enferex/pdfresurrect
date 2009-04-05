@@ -56,6 +56,7 @@ typedef struct _xref_t
     int  n_kids_allocs;
 
     int version;
+    int is_stream; /* PDF 1.5 or greater: xref can be encoded as a stream */
 } xref_t;
 
 
