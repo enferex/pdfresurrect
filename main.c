@@ -47,7 +47,7 @@ static void usage(void)
            "\t -q Display only the number of versions contained in the PDF\n"
            "\t -s Scrub the previous history data from the specified PDF\n");
 
-    _Exit(0);
+    exit(0);
 }
 
 
