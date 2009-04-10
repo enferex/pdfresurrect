@@ -30,14 +30,6 @@ AC_ARG_ENABLE([debug],
 AC_SUBST(CFLAGS)
 
 
-# External libraries
-CLIBS=""
-AC_CHECK_LIB([z], [zlibVersion], [CLIBS="$CLIBS -lz"])
-
-AC_SUBST(CLIBS)
-
-
-# Checks for library functions.
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_MALLOC
 AC_FUNC_MEMCMP
