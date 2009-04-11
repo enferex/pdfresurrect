@@ -36,12 +36,13 @@ static void load_xref_entries(FILE *fp, xref_t *xref);
 static void load_xref_from_plaintext(FILE *fp, xref_t *xref);
 static void load_xref_from_stream(FILE *fp, xref_t *xref);
 
-static char *get_object_from_here(FILE *fp, int *is_stream);
+static char *get_object_from_here(FILE *fp, size_t *size, int *is_stream);
 
 static char *get_object(
     FILE         *fp,
     int           obj_id,
     const xref_t *xref,
+    size_t       *size,
     int          *is_stream);
 
 static void add_kid(int id, xref_t *xref);
@@ -214,7 +215,7 @@ void pdf_load_pages_kids(FILE *fp, pdf_t *pdf)
             /* Jump to catalog (root) */
             id = atoi(c + strlen("/Root") + 1);
             free(buf);
-            buf = get_object(fp, id, &pdf->xrefs[i],  &dummy);
+            buf = get_object(fp, id, &pdf->xrefs[i], NULL, &dummy);
             if (!buf || !(c = strstr(buf, "/Pages")))
             {
                 free(buf);
@@ -287,7 +288,7 @@ void pdf_zero_object(
     fseek(fp, entry->offset, SEEK_SET);
 
     /* Get object and size */
-    obj = get_object(fp, entry->obj_id, &pdf->xrefs[xref_idx], NULL);
+    obj = get_object(fp, entry->obj_id, &pdf->xrefs[xref_idx], NULL, NULL);
     i = obj_sz = 0;
     while (strncmp((++i)+obj, "endobj", 6))
       ++obj_sz;
@@ -361,7 +362,9 @@ void pdf_summarize(
                         get_type(fp, pdf->xrefs[i].entries[j].obj_id,
                                  &pdf->xrefs[i]));
 
-                page = get_page(pdf->xrefs[i].entries[j].obj_id, &pdf->xrefs[i]);
+                page = get_page(pdf->xrefs[i].entries[j].obj_id,
+                                &pdf->xrefs[i]);
+
                 if (page)
                   fprintf(out, " Page(%d)\n", page);
                 else
@@ -401,7 +404,7 @@ void pdf_summarize(
  * stream (PDF 1.5 or higher) */
 static int is_valid_xref(FILE *fp, xref_t *xref)
 {
-    int   is_stream, is_valid;
+    int   is_valid;
     long  start;
     char *c, buf[16];
 
@@ -417,9 +420,9 @@ static int is_valid_xref(FILE *fp, xref_t *xref)
     else
     {  
         fseek(fp, xref->start, SEEK_SET);
-        c = get_object_from_here(fp, &is_stream);
+        c = get_object_from_here(fp, NULL, &xref->is_stream);
 
-        if (c && is_stream)
+        if (c && xref->is_stream)
         {
             free(c);
             is_valid = 1;
@@ -456,6 +459,7 @@ static void load_xref_from_plaintext(FILE *fp, xref_t *xref)
         break;
       else
         fseek(fp, --pos, SEEK_SET);
+
     fread(buf, 1, 21, fp);
     xref->n_entries = atoi(buf + strlen("ize "));
     xref->entries = calloc(1, xref->n_entries * sizeof(struct _xref_entry));
@@ -507,21 +511,20 @@ static void load_xref_from_plaintext(FILE *fp, xref_t *xref)
 /* Load an xref table from a stream (PDF v1.5 +) */
 static void load_xref_from_stream(FILE *fp, xref_t *xref)
 {
-    long  start;
-    int   is_stream;
-    char *stream;
+    long    start;
+    int     is_stream;
+    char   *stream;
+    size_t  size;
 
     start = ftell(fp);
     fseek(fp, xref->start, SEEK_SET);
 
-    stream = get_object_from_here(fp, &is_stream);
-
+    stream = NULL;
+    stream = get_object_from_here(fp, &size, &is_stream);
     fseek(fp, start, SEEK_SET);
 
-    if (!stream || !is_stream)
-      return;
-
     /* TODO: decode and analyize stream */
+    free(stream);
     return;
 }
 
@@ -529,7 +532,7 @@ static void load_xref_from_stream(FILE *fp, xref_t *xref)
 /* Returns object data at the start of the file pointer
  * This interfaces to 'get_object'
  */
-static char *get_object_from_here(FILE *fp, int *is_stream)
+static char *get_object_from_here(FILE *fp, size_t *size, int *is_stream)
 {
     long         start;
     char         buf[256];
@@ -559,7 +562,7 @@ static char *get_object_from_here(FILE *fp, int *is_stream)
     xref.entries = &entry;
 
     fseek(fp, start, SEEK_SET);
-    return get_object(fp, obj_id, &xref, is_stream);
+    return get_object(fp, obj_id, &xref, size, is_stream);
 }
 
 
@@ -567,17 +570,23 @@ static char *get_object(
     FILE         *fp,
     int           obj_id,
     const xref_t *xref,
+    size_t       *size,
     int          *is_stream)
 {
     static const int    blk_sz = 256;
     int                 i, total_sz, read_sz, n_blks, search, stream;
+    size_t              obj_sz;
     char               *c, *data;
     long                start;
     const xref_entry_t *entry;
 
-    start = ftell(fp);
+    if (size)
+      *size = 0;
+
     if (is_stream)
       *is_stream = 0;
+
+    start = ftell(fp);
 
     /* Find object */
     entry = NULL;
@@ -595,7 +604,8 @@ static char *get_object(
     fseek(fp, entry->offset, SEEK_SET);
 
     /* Initial allocate */
-    total_sz = 0;
+    obj_sz = 0;    /* Bytes in object */
+    total_sz = 0;  /* Bytes read in   */
     n_blks = 1;
     data = malloc(blk_sz * n_blks);
     memset(data, 0, blk_sz * n_blks);
@@ -605,6 +615,7 @@ static char *get_object(
     while ((read_sz = fread(data+total_sz, 1, blk_sz-1, fp)) && !ferror(fp))
     {
         total_sz += read_sz;
+
         *(data + total_sz) = '\0';
 
         if (total_sz + blk_sz >= (blk_sz * n_blks))
@@ -614,26 +625,25 @@ static char *get_object(
         if (search < 0)
           search = 0;
 
-        if (!stream && (c = strstr(data + search, "endobj")))
+        if ((c = strstr(data + search, "endobj")))
         {
             *(c + strlen("endobj") + 1) = '\0';
-            break;
-        }
-        else if (stream && (c = strstr(data + search, "endstream")))
-        {
-            *(c + strlen("endstream") + 1) = '\0';
+            obj_sz = (void *)strstr(data + search, "endobj") - (void *)data;
+            obj_sz += strlen("endobj") + 1;
             break;
         }
         else if (strstr(data, "stream"))
-        {
-            if (is_stream)
-              *is_stream = 1;
-            stream = 1;
-        }
+          stream = 1;
     }
 
     clearerr(fp);
     fseek(fp, start, SEEK_SET);
+
+    if (size)
+      *size = obj_sz;
+            
+    if (is_stream)
+      *is_stream = stream;
 
     return data;
 }
@@ -657,7 +667,7 @@ static void load_kids(FILE *fp, int pages_id, xref_t *xref)
     char *data, *c, buf[32];
 
     /* Get kids */
-    data = get_object(fp, pages_id, xref, &dummy);
+    data = get_object(fp, pages_id, xref, NULL, &dummy);
     if (!data || !(c = strstr(data, "/Kids")))
     {
         free(data);
@@ -698,8 +708,8 @@ static const char *get_type(FILE *fp, int obj_id, const xref_t *xref)
 
     start = ftell(fp);
 
-    if (!(obj = get_object(fp, obj_id, xref, &is_stream)) || 
-        is_stream                                          ||
+    if (!(obj = get_object(fp, obj_id, xref, NULL, &is_stream)) || 
+        is_stream                                               ||
         !(endobj = strstr(obj, "endobj")))
     {
         free(obj);
