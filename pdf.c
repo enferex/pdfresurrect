@@ -343,23 +343,10 @@ void pdf_summarize(
       if (pdf->xrefs[i].version)
         ++n_versions;
 
-    /* Compare each object */
-    for (i=0; i<pdf->n_xrefs; i++)
+    /* Compare each object (if we dont have xref streams) */
+    for (i=0; !(const int)pdf->has_xref_streams && i<pdf->n_xrefs; i++)
     {
-        /* If we have a 1.5 PDF using streams for xref, we have not objects
-         * to display, so let the user know whats up.
-         */
-        if (pdf->has_xref_streams)
-        {
-            fprintf(out,
-                    "%s: This PDF contains cross reference streams.\n"
-                    "%s: An object summary is not available.\n",
-                    pdf->name,
-                    pdf->name);
-            break;
-        }
-
-        else if (pdf->xrefs[i].version)
+        if (pdf->xrefs[i].version)
         {
             if (flags & PDF_FLAG_QUIET)
               continue;
@@ -392,6 +379,17 @@ void pdf_summarize(
     /* Trailing summary */
     if (!(flags & PDF_FLAG_QUIET))
     {
+        /* Let the user know that we cannot we print a per-object summary.
+         * If we have a 1.5 PDF using streams for xref, we have not objects
+         * to display, so let the user know whats up.
+         */
+        if (pdf->has_xref_streams)
+           fprintf(out,
+               "%s: This PDF contains cross reference streams.\n"
+               "%s: An object summary is not available.\n",
+               pdf->name,
+               pdf->name);
+
         fprintf(out,
                 "---------- %s ----------\n"
                 "Versions: %d\n", 
