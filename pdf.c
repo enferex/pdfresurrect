@@ -31,7 +31,7 @@
  * Forwards
  */
 
-static int is_valid_xref(FILE *fp, xref_t *xref);
+static int is_valid_xref(FILE *fp, pdf_t *pdf, xref_t *xref);
 static void load_xref_entries(FILE *fp, xref_t *xref);
 static void load_xref_from_plaintext(FILE *fp, xref_t *xref);
 static void load_xref_from_stream(FILE *fp, xref_t *xref);
@@ -167,7 +167,7 @@ int pdf_load_xrefs(FILE *fp, pdf_t *pdf)
 
         /* Look for next EOF and xref data */
         fseek(fp, pos, SEEK_SET);
-        if (!is_valid_xref(fp, &pdf->xrefs[i]))
+        if (!is_valid_xref(fp, pdf, &pdf->xrefs[i]))
         {
             memset(&pdf->xrefs[i], 0, sizeof(xref_t));
             continue;
@@ -337,14 +337,30 @@ void pdf_summarize(
     /* Send output to file or stdout */
     out = (dst) ? dst : stdout;
 
-    /* Compare each object */
+    /* Count verions */
     n_versions = 0;
     for (i=0; i<pdf->n_xrefs; i++)
-    {
-        if (pdf->xrefs[i].version)
-        {
-            ++n_versions;
+      if (pdf->xrefs[i].version)
+        ++n_versions;
 
+    /* Compare each object */
+    for (i=0; i<pdf->n_xrefs; i++)
+    {
+        /* If we have a 1.5 PDF using streams for xref, we have not objects
+         * to display, so let the user know whats up.
+         */
+        if (pdf->has_xref_streams)
+        {
+            fprintf(out,
+                    "%s: This PDF contains cross reference streams.\n"
+                    "%s: An object summary is not available.\n",
+                    pdf->name,
+                    pdf->name);
+            break;
+        }
+
+        else if (pdf->xrefs[i].version)
+        {
             if (flags & PDF_FLAG_QUIET)
               continue;
 
@@ -382,12 +398,13 @@ void pdf_summarize(
                 pdf->name,
                 n_versions);
 
-        for (i=0; i<pdf->n_xrefs; i++)
-          if (pdf->xrefs[i].version)
-            fprintf(out,
-                    "Version %d -- %d objects\n",
-                    pdf->xrefs[i].version, 
-                    pdf->xrefs[i].n_entries);
+        if (!pdf->has_xref_streams)
+          for (i=0; i<pdf->n_xrefs; i++)
+            if (pdf->xrefs[i].version)
+              fprintf(out,
+                      "Version %d -- %d objects\n",
+                      pdf->xrefs[i].version, 
+                      pdf->xrefs[i].n_entries);
     }
     else /* Quiet output */
       fprintf(out, "%s: %d\n", pdf->name, n_versions);
@@ -402,7 +419,7 @@ void pdf_summarize(
 
 /* Checks if the xref is valid and sets 'is_stream' flag if the xref is a
  * stream (PDF 1.5 or higher) */
-static int is_valid_xref(FILE *fp, xref_t *xref)
+static int is_valid_xref(FILE *fp, pdf_t *pdf, xref_t *xref)
 {
     int   is_valid;
     long  start;
@@ -425,6 +442,7 @@ static int is_valid_xref(FILE *fp, xref_t *xref)
         if (c && xref->is_stream)
         {
             free(c);
+            pdf->has_xref_streams = 1;
             is_valid = 1;
         }
     }
