@@ -3,7 +3,7 @@
  *
  * pdfresurrect - PDF history extraction tool
  *
- * Copyright (C) 2008 Matt Davis (enferex) of 757Labs (www.757labs.com)
+ * Copyright (C) 2008, 2009 Matt Davis (enferex) of 757Labs (www.757labs.com)
  *
  * main.h is part of pdfresurrect.
  * pdfresurrect is free software: you can redistribute it and/or modify
@@ -28,7 +28,7 @@
 
 #define EXEC_NAME "pdfresurrect"
 #define VER_MAJOR "0"
-#define VER_MINOR "4+"
+#define VER_MINOR "5"
 #define VER       VER_MAJOR"."VER_MINOR 
 
 

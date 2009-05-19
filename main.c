@@ -32,7 +32,7 @@
 
 static void usage(void)
 {
-    printf(EXEC_NAME " Copyright (C) 2008 Matt Davis \n"
+    printf(EXEC_NAME " Copyright (C) 2008, 2009 Matt Davis \n"
            "(enferex) of 757labs (www.757labs.com)\n"
            "This program comes with ABSOLUTELY NO WARRANTY\n"
            "This is free software, and you are welcome to redistribute it\n"
