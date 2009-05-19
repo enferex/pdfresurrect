@@ -1,6 +1,5 @@
 pdfresurrect
 ------------
-
 PDFResurrect is a tool aimed at analyzing PDF documents.  The PDF format allows
 for previous document changes to be retained in a more recent version of the
 document, thereby creating a running history of changes for the document.  This
@@ -11,9 +10,15 @@ effort to disguise information from previous versions that might not be
 intended for anyone else to read.
 
 
+Notes
+-----
+The scrubbing feature (-s) should not be trusted for any serious security
+uses.  After using this feature, please verify that it in fact zero'd all
+of the objects that were in concern (those objects that were to be zero'd).
+
+
 Building
 --------
-
 From the top-level directory of pdfresurrect run:
     ./configure
     make
@@ -32,6 +37,6 @@ GNU (www.gnu.org)
 
 
 Contact / Project URL
--------
+---------------------
 mattdavis9@gmail.com
 www.757labs.com/projects/pdfresurrect
