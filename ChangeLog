@@ -1,3 +1,27 @@
+-- Version 0.5 --
+
+2009-05-19 Matt Davis <mattdavis9@gmail.com>
+
+* pdf.h: Added notes that PDFs of version 1.5+ can have compressed stream xref
+
+* pdf.c: Warn on encoded xref streams
+*
+*        Added utility get_object_from_here() to obtain a PDF object at file
+*        pointer start
+*
+*        Break the xref into a routine for plaintext or encoded
+*        We will probably not decode the compressed stream but its
+*        nice to have a place for it.
+
+* configure.in: Added -DDEBUG on debug builds (nothing uses this yet)
+*
+*               Added AC_TYPE_SIZE_T check
+
+* main.c: Added -s to the usage statement
+*
+*         Using more portable exit call
+
+
 -- Version 0.04 --
 
 2008-08-10 Matt Davis <mattdavis9@gmail.com>
