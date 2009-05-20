@@ -14,7 +14,17 @@ Notes
 -----
 The scrubbing feature (-s) should not be trusted for any serious security
 uses.  After using this feature, please verify that it in fact zero'd all
-of the objects that were in concern (those objects that were to be zero'd).
+of the objects that were of concern (those objects that were to be zero'd).
+
+This tool relies on the application reading the pdfresurrect extracted versions
+to treat the last xref table as the most recent in the document.  This should
+typically be the case.
+
+The verbose output, which tries to deduce the PDF object type (e.g. stream,
+page), is not always accurate, and the object counts might not be 100%
+accurate.  However, this should not prevent the extraction of the versions.
+This output is merely to provide a hint for the user as to what might be
+different between the documents.
 
 
 Building
