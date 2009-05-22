@@ -1675,6 +1675,10 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
+# Install prefix
+AC_INSTALL_PREFIX(/usr/loc/)
+
+
 # Checks for programs.
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'

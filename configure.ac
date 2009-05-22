@@ -5,6 +5,10 @@ AC_PREREQ(2.61)
 AC_INIT
 
 
+# Install prefix
+AC_INSTALL_PREFIX(/usr/loc/)
+
+
 # Checks for programs.
 AC_PROG_CC
 
