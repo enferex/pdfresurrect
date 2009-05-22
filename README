@@ -33,17 +33,27 @@ From the top-level directory of pdfresurrect run:
     ./configure
     make
 
+To install/uninstall the resulting binary to a specific path
+the '--prefix=' flag can be used:
+    ./configure --prefix=/my/desired/path/
+
 Debugging mode can be enabled when configuring by using the following option:
     ./configure --enable-debug
 
-The resulting binary can be placed anywhere, as there is no "install" target in
-the makefile.
+The resulting binary can be placed anywhere, however it can also be
+installed/uninstalled to the configured path automatically.  If no path was
+specified at configure time, the default is /usr/local/bin
+To install/uninstall:
+    make install 
+         or
+    make uninstall
 
 
 Thanks
 ------
 The rest of 757labs (www.757labs.com)
 GNU (www.gnu.org)
+Francois Marier of Debian
 
 
 Contact / Project URL
