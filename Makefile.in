@@ -1,4 +1,5 @@
 APP = pdfresurrect
+MANPAGE = pdfresurrect.1
 OBJS = main.o pdf.o
 CC = @CC@
 CFLAGS = @CFLAGS@
@@ -14,9 +15,11 @@ $(APP): $(OBJS)
 
 install:
 	cp $(APP) $(PREFIX)/bin/
+	cp $(MANPAGE) $(PREFIX)/man/man1/
 
 uninstall:
 	rm $(PREFIX)/bin/$(APP)
+	rm $(PREFIX)/man/man1/$(MANPAGE)
 
 clean:
 	rm -rfv $(OBJS) $(APP)

@@ -7,6 +7,7 @@
 
 * Makefile.in: Added .PHONY target for uninstall
 *              Removed backup target
+*              install and uninstall targets also add/remove the man page
 
 * configure.ac: Added default prefix as suggested by Francois Marier
 
