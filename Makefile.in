@@ -25,4 +25,4 @@ distclean: clean
 	rm -f Makefile
 	rm -f config.log config.status
 
-.PHONY: clean distclean install
+.PHONY: install uninstall clean distclean

@@ -6,7 +6,7 @@ AC_INIT
 
 
 # Install prefix
-AC_INSTALL_PREFIX(/usr/loc/)
+AC_PREFIX_DEFAULT(/usr/local)
 
 
 # Checks for programs.

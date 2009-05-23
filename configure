@@ -576,6 +576,7 @@ PACKAGE_VERSION=
 PACKAGE_STRING=
 PACKAGE_BUGREPORT=
 
+ac_default_prefix=/usr/local
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>
@@ -1676,7 +1677,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 # Install prefix
-AC_INSTALL_PREFIX(/usr/loc/)
+
 
 
 # Checks for programs.
