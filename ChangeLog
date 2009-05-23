@@ -1,3 +1,25 @@
+-- Version 0.6 --
+
+2009-05-23 Matt Davis <mattdavis9@gmail.com> and 
+
+* pdfresurrect.1: Added Francois Marier's man page.
+*                 Added NOTES and COPYRIGHT to man page.
+
+* Makefile.in: Added .PHONY target for uninstall
+*              Removed backup target
+
+* configure.ac: Added default prefix as suggested by Francois Marier
+
+
+2009-05-22 Francois Mariner <francois@debian.org>
+
+* pdfresurrect.1: Added Francois Marier's man page.
+
+* Makefile.in: Added Francois Marier's changes to add 
+*              install, distclean, and .PHONY targets
+
+
+
 -- Version 0.5 --
 
 2009-05-19 Matt Davis <mattdavis9@gmail.com>
