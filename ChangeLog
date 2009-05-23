@@ -19,7 +19,6 @@
 *              install, distclean, and .PHONY targets
 
 
-
 -- Version 0.5 --
 
 2009-05-19 Matt Davis <mattdavis9@gmail.com>
