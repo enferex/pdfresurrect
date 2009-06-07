@@ -50,6 +50,7 @@ static void load_kids(FILE *fp, int pages_id, xref_t *xref);
 
 static const char *get_type(FILE *fp, int obj_id, const xref_t *xref);
 static int get_page(int obj_id, const xref_t *xref);
+static char *get_header(FILE *fp);
 
 
 /*
@@ -102,12 +103,36 @@ void pdf_delete(pdf_t *pdf)
 
 int pdf_is_pdf(FILE *fp)
 {
-    char magic[5];
+    int   is_pdf;
+    char *header;
 
-    fseek(fp, 0, SEEK_SET);
-    fread(magic, 5, 1, fp);
+    header = get_header(fp);
 
-    return (memcmp(magic, "%PDF-", 5) == 0);
+    if (header && strstr(header, "%PDF-"))
+      is_pdf = 1;
+    else 
+      is_pdf = 0;
+
+    free(header);
+    return is_pdf;
+}
+
+
+void pdf_get_version(FILE *fp, pdf_t *pdf)
+{
+    char *header, *c;
+
+    header = get_header(fp);
+
+    /* Locate version string start and make sure we dont go past header */
+    if ((c = strstr(header, "%PDF-")) && 
+        (c + strlen("%PDF-M.m") + 2))
+    {
+        pdf->pdf_major_version = atoi(c + strlen("%PDF-"));
+        pdf->pdf_minor_version = atoi(c + strlen("%PDF-M."));
+    }
+
+    free(header);
 }
 
 
@@ -301,6 +326,14 @@ void pdf_zero_object(
       fputc('0', fp);
 
     free(obj);
+}
+
+
+/* Call pdf_creator_delete to properlly release memory */
+pdf_creator_t *pdf_get_creator(FILE *fp, const pdf_t *pdf)
+{
+    /* TODO */
+    return NULL;
 }
 
 
@@ -787,4 +820,22 @@ static int get_page(int obj_id, const xref_t *xref)
 
     return i;
     */
+}
+
+
+static char *get_header(FILE *fp)
+{
+    long start;
+
+    /* First 1024 bytes of doc must be header (1.7 spec pg 1102) */
+    char *header;
+
+    header = calloc(1, 1024);
+    
+    start = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    fread(header, 1024, 1, fp);
+    fseek(fp, start, SEEK_SET);
+    
+    return header;
 }

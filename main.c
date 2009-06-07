@@ -40,9 +40,9 @@ static void usage(void)
            "that came with this software or visit:\n"
            "<http://www.gnu.org/licenses/gpl-3.0.txt>\n\n");
     
-     
     printf("-- " EXEC_NAME " v" VER" --\n"
-           "Usage: ./" EXEC_NAME " <file.pdf> [-w] [-q] [-s]\n"
+           "Usage: ./" EXEC_NAME " <file.pdf> [-i] [-w] [-q] [-s]\n"
+           "\t -i Display PDF creator information\n"
            "\t -w Write the PDF versions and summary to disk\n"
            "\t -q Display only the number of versions contained in the PDF\n"
            "\t -s Scrub the previous history data from the specified PDF\n");
@@ -209,10 +209,26 @@ static pdf_t *init_pdf(FILE *fp, const char *name)
     pdf_t *pdf;
 
     pdf = pdf_new(name);
+    pdf_get_version(fp, pdf);
     pdf_load_xrefs(fp, pdf);
     pdf_load_pages_kids(fp, pdf);
 
     return pdf;
+}
+
+
+static void display_creator(FILE *fp, const pdf_t *pdf)
+{
+    const pdf_creator_t *daddy;
+
+    printf("PDF Version: %d.%d\n",
+           pdf->pdf_major_version, pdf->pdf_minor_version);
+
+    if (!(daddy = pdf_get_creator(fp, pdf)))
+    {
+        ERR("Could not locate creator information for this version "
+            "of the document");
+    }
 }
 
 
@@ -235,6 +251,8 @@ int main(int argc, char **argv)
     {
         if (strncmp(argv[i], "-w", 2) == 0)
           do_write = 1;
+        if (strncmp(argv[i], "-i", 2) == 0)
+          flags |= PDF_FLAG_DISP_CREATOR;
         else if (strncmp(argv[i], "-q", 2) == 0)
           flags |= PDF_FLAG_QUIET;
         else if (strncmp(argv[i], "-s", 2) == 0)
@@ -275,7 +293,7 @@ int main(int argc, char **argv)
     /* Bail if we only have 1 valid */
     if (n_valid < 2)
     {
-        if (!(flags & PDF_FLAG_QUIET))
+        if (!(flags & (PDF_FLAG_QUIET | PDF_FLAG_DISP_CREATOR)))
           printf("%s: There is only one version of this PDF\n", pdf->name);
 
         if (do_write)
@@ -323,6 +341,10 @@ int main(int argc, char **argv)
     /* Have we been summoned to scrub history from this PDF */
     if (do_scrub)
       scrub_document(fp, pdf);
+
+    /* Display extra information */
+    if (flags & PDF_FLAG_DISP_CREATOR)
+      display_creator(fp, pdf);
 
     fclose(fp);
     free(dname);

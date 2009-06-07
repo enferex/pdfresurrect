@@ -28,8 +28,22 @@
 
 /* Bit-maskable flags */
 typedef unsigned short pdf_flag_t;
-#define PDF_FLAG_NONE  0
-#define PDF_FLAG_QUIET 1
+#define PDF_FLAG_NONE         0
+#define PDF_FLAG_QUIET        1
+#define PDF_FLAG_DISP_CREATOR 2
+
+
+/* Information about who/what created the PDF */
+typedef struct _pdf_creator_t
+{
+    /* From 1.7 Spec for non-metadata entries */
+    char *title;
+    char *author;
+    char *creator;
+    char *producer;
+    char *creation_date;
+    char *mod_date;
+} pdf_creator_t;
 
 
 typedef struct _xref_entry
@@ -47,6 +61,10 @@ typedef struct _xref_t
 {
     long start;
     long end;
+    
+    /* Each cross reference might represent a differnt version */
+    long creator_start;
+    long creator_end;
 
     int n_entries;
     xref_entry_t *entries;
@@ -63,7 +81,10 @@ typedef struct _xref_t
 
 typedef struct _pdf_t
 {
-    char   *name;
+    char  *name;
+    short  pdf_major_version;
+    short  pdf_minor_version;
+
     int     n_xrefs;
     xref_t *xrefs;
     
@@ -76,6 +97,7 @@ extern pdf_t *pdf_new(const char *name);
 extern void pdf_delete(pdf_t *pdf);
 
 extern int pdf_is_pdf(FILE *fp);
+extern void pdf_get_version(FILE *fp, pdf_t *pdf);
 
 extern int pdf_load_xrefs(FILE *fp, pdf_t *pdf);
 extern void pdf_load_pages_kids(FILE *fp, pdf_t *pdf);
@@ -91,7 +113,10 @@ extern void pdf_zero_object(
     int          xref_idx,
     int          entry_idx);
 
-void pdf_summarize(
+/* Call pdf_creator_delete on the return when done */
+extern pdf_creator_t *pdf_get_creator(FILE *fp, const pdf_t *pdf);
+
+extern void pdf_summarize(
     FILE        *fp,
     const pdf_t *pdf,
     const char  *name,
