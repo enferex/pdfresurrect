@@ -1,3 +1,11 @@
+-- Version 0.7 --
+
+2009-05-24 Francois Marier <francois@debian.org>
+
+* pdfresurrect.1: Added Francois Marier's update to the man page
+*                 escaping a hyphen
+
+
 -- Version 0.6 --
 
 2009-05-23 Matt Davis <mattdavis9@gmail.com> and 
