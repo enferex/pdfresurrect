@@ -3,7 +3,7 @@
  *
  * pdfresurrect - PDF history extraction tool
  *
- * Copyright (C) 2008 Matt Davis (enferex) of 757Labs (www.757labs.com)
+ * Copyright (C) 2008, 2009 Matt Davis (enferex) of 757Labs (www.757labs.com)
  *
  * pdf.c is part of pdfresurrect.
  * pdfresurrect is free software: you can redistribute it and/or modify
@@ -35,6 +35,8 @@ static int is_valid_xref(FILE *fp, pdf_t *pdf, xref_t *xref);
 static void load_xref_entries(FILE *fp, xref_t *xref);
 static void load_xref_from_plaintext(FILE *fp, xref_t *xref);
 static void load_xref_from_stream(FILE *fp, xref_t *xref);
+static void load_creator(FILE *fp, pdf_t *);
+static void load_creator_from_buf(xref_t *xref, const char *buf);
 
 static char *get_object_from_here(FILE *fp, size_t *size, int *is_stream);
 
@@ -203,6 +205,11 @@ int pdf_load_xrefs(FILE *fp, pdf_t *pdf)
         /*  Load the entries from the xref */
         load_xref_entries(fp, &pdf->xrefs[i]);
     }
+
+    /* Ok now we have all xref data.  Go through those versions of the 
+     * PDF and try to obtain creator information
+     */
+    load_creator(fp, pdf);
 
     return pdf->n_xrefs;
 }
@@ -575,6 +582,77 @@ static void load_xref_from_stream(FILE *fp, xref_t *xref)
     /* TODO: decode and analyize stream */
     free(stream);
     return;
+}
+
+#define END_OF_TRAILER(_c, _st, _fp) \
+{                                    \
+    if (_c == '>')                   \
+    {                                \
+        fseek(_fp, _st, SEEK_SET);   \
+        return;                      \
+    }                                \
+}
+static void load_creator(FILE *fp, pdf_t *pdf)
+{
+    int    i, buf_idx;
+    char   c, *buf, obj_id_buf[32];
+    long   start;
+    size_t sz;
+
+    start = ftell(fp);
+
+    /* For each PDF version */
+    for (i=0; i<pdf->n_xrefs; ++i)
+    {
+        if (!pdf->xrefs[i].version)
+          continue;
+
+        /* Find trailer */
+        fseek(fp, pdf->xrefs[i].start, SEEK_SET);
+        while (fgetc(fp) != 't')
+            ; /* Iterate to "trailer" */
+
+        /* Look for "<< ....... /Info ......" */
+        while ((c = fgetc(fp)) != '>')
+          if ((c == '/') && (fgetc(fp) == 'I') && ((fgetc(fp) == 'n')))
+            break;
+
+        /* Could not find /Info in trailer */
+        END_OF_TRAILER(c, start, fp);
+
+        while (!isspace(c = fgetc(fp)) && (c != '>'))
+            ; /* Iterate to first white space /Info<space><data> */
+
+        /* No space between /Info and it's data */
+        END_OF_TRAILER(c, start, fp);
+
+        while (isspace(c = fgetc(fp)) && (c != '>'))
+            ; /* Iterate right on top of first non-whitespace /Info data */
+
+        /* No data for /Info */
+        END_OF_TRAILER(c, start, fp);
+
+        /* Get obj id as number */
+        buf_idx = 0;
+        while (!isspace(c = fgetc(fp)) && (c != '>'))
+          obj_id_buf[buf_idx++] = c;
+
+        END_OF_TRAILER(c, start, fp);
+
+        obj_id_buf[buf_idx] = '\0';
+        buf = get_object(fp, atoll(obj_id_buf), &pdf->xrefs[i], &sz, NULL);
+        load_creator_from_buf(&pdf->xrefs[i], buf);
+        free(buf);
+    }
+
+    fseek(fp, start, SEEK_SET);
+}
+
+
+static void load_creator_from_buf(xref_t *xref, const char *buf)
+{
+    if (!buf)
+      return;
 }
 
 

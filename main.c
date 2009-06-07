@@ -204,19 +204,6 @@ static void scrub_document(FILE *fp, const pdf_t *pdf)
 }
 
 
-static pdf_t *init_pdf(FILE *fp, const char *name)
-{
-    pdf_t *pdf;
-
-    pdf = pdf_new(name);
-    pdf_get_version(fp, pdf);
-    pdf_load_xrefs(fp, pdf);
-    pdf_load_pages_kids(fp, pdf);
-
-    return pdf;
-}
-
-
 static void display_creator(FILE *fp, const pdf_t *pdf)
 {
     const pdf_creator_t *daddy;
@@ -229,6 +216,19 @@ static void display_creator(FILE *fp, const pdf_t *pdf)
         ERR("Could not locate creator information for this version "
             "of the document");
     }
+}
+
+
+static pdf_t *init_pdf(FILE *fp, const char *name)
+{
+    pdf_t *pdf;
+
+    pdf = pdf_new(name);
+    pdf_get_version(fp, pdf);
+    pdf_load_xrefs(fp, pdf);
+    pdf_load_pages_kids(fp, pdf);
+
+    return pdf;
 }
 
 

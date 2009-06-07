@@ -3,7 +3,7 @@
  *
  * pdfresurrect - PDF history extraction tool
  *
- * Copyright (C) 2008 Matt Davis (enferex) of 757Labs (www.757labs.com)
+ * Copyright (C) 2008, 2009 Matt Davis (enferex) of 757Labs (www.757labs.com)
  *
  * pdf.h is part of pdfresurrect.
  * pdfresurrect is free software: you can redistribute it and/or modify
