@@ -35,8 +35,11 @@ static int is_valid_xref(FILE *fp, pdf_t *pdf, xref_t *xref);
 static void load_xref_entries(FILE *fp, xref_t *xref);
 static void load_xref_from_plaintext(FILE *fp, xref_t *xref);
 static void load_xref_from_stream(FILE *fp, xref_t *xref);
+static pdf_creator_t *new_creator(int *n_elements);
 static void load_creator(FILE *fp, pdf_t *);
 static void load_creator_from_buf(xref_t *xref, const char *buf);
+static void load_creator_from_xml(xref_t *xref, const char *buf);
+static void load_creator_from_old_format(xref_t *xref, const char *buf);
 
 static char *get_object_from_here(FILE *fp, size_t *size, int *is_stream);
 
@@ -584,6 +587,34 @@ static void load_xref_from_stream(FILE *fp, xref_t *xref)
     return;
 }
 
+
+static pdf_creator_t *new_creator(int *n_elements)
+{
+    pdf_creator_t *daddy;
+
+    static const pdf_creator_t creator_template[] = 
+    {
+        {"Title",        ""},
+        {"Author",       ""},
+        {"Subject",      ""},
+        {"Keywords",     ""},
+        {"Creator",      ""},
+        {"Producer",     ""},
+        {"CreationDate", ""},
+        {"ModDate",      ""},
+        {"Trapped",      ""},
+    };
+
+    daddy = malloc(sizeof(creator_template));
+    memcpy(daddy, creator_template, sizeof(creator_template));
+
+    if (n_elements)
+      *n_elements = sizeof(creator_template) / sizeof(creator_template[0]);
+
+    return daddy;
+}
+
+
 #define END_OF_TRAILER(_c, _st, _fp) \
 {                                    \
     if (_c == '>')                   \
@@ -634,6 +665,7 @@ static void load_creator(FILE *fp, pdf_t *pdf)
 
         /* Get obj id as number */
         buf_idx = 0;
+        obj_id_buf[buf_idx++] = c;
         while (!isspace(c = fgetc(fp)) && (c != '>'))
           obj_id_buf[buf_idx++] = c;
 
@@ -651,8 +683,70 @@ static void load_creator(FILE *fp, pdf_t *pdf)
 
 static void load_creator_from_buf(xref_t *xref, const char *buf)
 {
+    int   is_xml;
+    char *c;
+
     if (!buf)
       return;
+
+    /* Check to see if this is xml or old-school */
+    if ((c = strstr(buf, "/Type")))
+      while (*c && !isspace(*c))
+        ++c;
+
+    /* Probably "Metadata" */
+    is_xml = 0;
+    if (c && (*c == 'M'))
+      is_xml = 1;
+
+    /* Is the buffer XML(PDF 1.4+) or old format? */
+    if (is_xml)
+      load_creator_from_xml(xref, buf);
+    else
+      load_creator_from_old_format(xref, buf);
+}
+
+
+static void load_creator_from_xml(xref_t *xref, const char *buf)
+{
+    /* TODO */
+}
+
+
+static void load_creator_from_old_format(xref_t *xref, const char *buf)
+{
+    int            i, n_eles, length;
+    char          *c;
+    pdf_creator_t *info;
+
+    info = new_creator(&n_eles);
+
+    for (i=0; i<n_eles; ++i)
+    {
+        if (!(c = strstr(buf, info[i].key)))
+          continue;
+
+        /* Find the value (skipping whitespace) */
+        c += strlen(info[i].key);
+        while (isspace(*c))
+          ++c;
+
+        /* Find the end of the value */
+        length = 0;
+        while (c && ((*c != '\r') && (*c != '\n')))
+        {
+            ++c;
+            ++length;
+        }
+
+        c -= length;
+        length = (length > KV_MAX_VALUE_LENGTH) ? KV_MAX_VALUE_LENGTH : length;
+        strncpy(info[i].value, c, length);
+        info[i].value[length] = '\0';
+    }
+
+    xref->creator = info;
+    xref->n_creator_entries = n_eles;
 }
 
 

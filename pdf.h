@@ -33,17 +33,20 @@ typedef unsigned short pdf_flag_t;
 #define PDF_FLAG_DISP_CREATOR 2
 
 
-/* Information about who/what created the PDF */
-typedef struct _pdf_creator_t
+/* Generic key/value structure */
+#define KV_MAX_KEY_LENGTH   32
+#define KV_MAX_VALUE_LENGTH 64
+typedef struct _kv_t
 {
-    /* From 1.7 Spec for non-metadata entries */
-    char *title;
-    char *author;
-    char *creator;
-    char *producer;
-    char *creation_date;
-    char *mod_date;
-} pdf_creator_t;
+    char key[KV_MAX_KEY_LENGTH];
+    char value[KV_MAX_VALUE_LENGTH];
+} kv_t;
+
+
+/* Information about who/what created the PDF 
+ * From 1.7 Spec for non-metadata entries
+ */
+typedef kv_t pdf_creator_t;
 
 
 typedef struct _xref_entry
@@ -61,10 +64,10 @@ typedef struct _xref_t
 {
     long start;
     long end;
-    
-    /* Each cross reference might represent a differnt version */
-    long creator_start;
-    long creator_end;
+
+    /* Array of metadata about the pdf */    
+    pdf_creator_t *creator;
+    int n_creator_entries;
 
     int n_entries;
     xref_entry_t *entries;

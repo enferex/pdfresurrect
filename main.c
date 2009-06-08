@@ -206,7 +206,7 @@ static void scrub_document(FILE *fp, const pdf_t *pdf)
 
 static void display_creator(FILE *fp, const pdf_t *pdf)
 {
-    const pdf_creator_t *daddy;
+    int i;
 
     printf("PDF Version: %d.%d\n",
            pdf->pdf_major_version, pdf->pdf_minor_version);
