@@ -35,7 +35,7 @@ typedef unsigned short pdf_flag_t;
 
 /* Generic key/value structure */
 #define KV_MAX_KEY_LENGTH   32
-#define KV_MAX_VALUE_LENGTH 64
+#define KV_MAX_VALUE_LENGTH 128
 typedef struct _kv_t
 {
     char key[KV_MAX_KEY_LENGTH];
@@ -116,14 +116,13 @@ extern void pdf_zero_object(
     int          xref_idx,
     int          entry_idx);
 
-/* Call pdf_creator_delete on the return when done */
-extern pdf_creator_t *pdf_get_creator(FILE *fp, const pdf_t *pdf);
-
 extern void pdf_summarize(
     FILE        *fp,
     const pdf_t *pdf,
     const char  *name,
     pdf_flag_t   flags);
+
+extern void pdf_display_creator(const pdf_t *pdf, int xref_idx);
 
 
 #endif /* PDF_H_INCLUDE */

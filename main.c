@@ -211,10 +211,13 @@ static void display_creator(FILE *fp, const pdf_t *pdf)
     printf("PDF Version: %d.%d\n",
            pdf->pdf_major_version, pdf->pdf_minor_version);
 
-    if (!(daddy = pdf_get_creator(fp, pdf)))
+    for (i=0; i<pdf->n_xrefs; ++i)
     {
-        ERR("Could not locate creator information for this version "
-            "of the document");
+        if (!pdf->xrefs[i].version)
+          continue;
+        
+        printf("Document History: Version %d\n", pdf->xrefs[i].version);
+        pdf_display_creator(pdf, i);
     }
 }
 

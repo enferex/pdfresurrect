@@ -57,6 +57,8 @@ static const char *get_type(FILE *fp, int obj_id, const xref_t *xref);
 static int get_page(int obj_id, const xref_t *xref);
 static char *get_header(FILE *fp);
 
+static char *decode_text_string(const char *str, size_t str_len);
+
 
 /*
  * Defined
@@ -96,6 +98,7 @@ void pdf_delete(pdf_t *pdf)
 
     for (i=0; i<pdf->n_xrefs; i++)
     {
+        free(pdf->xrefs[i].creator);
         free(pdf->xrefs[i].entries);
         free(pdf->xrefs[i].kids);
     }
@@ -339,14 +342,6 @@ void pdf_zero_object(
 }
 
 
-/* Call pdf_creator_delete to properlly release memory */
-pdf_creator_t *pdf_get_creator(FILE *fp, const pdf_t *pdf)
-{
-    /* TODO */
-    return NULL;
-}
-
-
 /* Output information per version */
 void pdf_summarize(
     FILE        *fp,
@@ -455,6 +450,20 @@ void pdf_summarize(
         fclose(dst);
         free(dst_name);
     }
+}
+
+
+void pdf_display_creator(const pdf_t *pdf, int xref_idx)
+{
+    int i;
+
+    if (!pdf->xrefs[xref_idx].creator)
+      return;
+
+    for (i=0; i<pdf->xrefs[xref_idx].n_creator_entries; ++i)
+      printf("%s: %s\n",
+             pdf->xrefs[xref_idx].creator[i].key,
+             pdf->xrefs[xref_idx].creator[i].value);
 }
 
 
@@ -716,7 +725,7 @@ static void load_creator_from_xml(xref_t *xref, const char *buf)
 static void load_creator_from_old_format(xref_t *xref, const char *buf)
 {
     int            i, n_eles, length;
-    char          *c;
+    char          *c, *ascii;
     pdf_creator_t *info;
 
     info = new_creator(&n_eles);
@@ -744,6 +753,14 @@ static void load_creator_from_old_format(xref_t *xref, const char *buf)
         strncpy(info[i].value, c, length);
         info[i].value[length] = '\0';
     }
+
+    /* Go through the values and convert if encoded */
+    for (i=0; i<n_eles; ++i)
+      if ((ascii = decode_text_string(info[i].value, strlen(info[i].value))))
+      {
+          strncpy(info[i].value, ascii, strlen(info[i].value));
+          free(ascii);
+      }
 
     xref->creator = info;
     xref->n_creator_entries = n_eles;
@@ -1010,4 +1027,49 @@ static char *get_header(FILE *fp)
     fseek(fp, start, SEEK_SET);
     
     return header;
+}
+
+
+static char *decode_text_string(const char *str, size_t str_len)
+{
+    int   idx, is_hex, is_utf16be, ascii_idx;
+    char *ascii, hex_buf[5] = {0};
+
+    is_hex = is_utf16be = idx = ascii_idx = 0;
+
+    /* Regular encoding */
+    if (str[0] == '(')
+    {
+        ascii = strdup(str);
+        return ascii;
+    }
+    else if (str[0] == '<')
+    {
+        is_hex = 1;
+        ++idx;
+    }
+    
+    /* Text strings can be either PDFDocEncoding or UTF-16BE */
+    if (is_hex && (str_len > 5) && 
+        (str[idx] == 'F') && (str[idx+1] == 'E') &&
+        (str[idx+2] == 'F') && (str[idx+3] == 'F'))
+    {
+        is_utf16be = 1;
+        idx += 4;
+    }
+    else
+      return NULL;
+
+    /* Now decode as hex */
+    ascii = malloc(str_len);
+    for ( ; idx<str_len; ++idx)
+    {
+        hex_buf[0] = str[idx++];
+        hex_buf[1] = str[idx++];
+        hex_buf[2] = str[idx++];
+        hex_buf[3] = str[idx];
+        ascii[ascii_idx++] = strtol(hex_buf, NULL, 16);
+    }
+
+    return ascii;
 }
