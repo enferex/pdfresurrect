@@ -440,6 +440,7 @@ void pdf_summarize(
         /* If linear, sum the entry count and apply it as a combined
          * xref total (linear xref + next xref)
          */
+        linear_sum = 0;
         if (!pdf->has_xref_streams)
           for (i=0; i<pdf->n_xrefs; i++)
           {
