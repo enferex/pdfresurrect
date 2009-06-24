@@ -78,6 +78,11 @@ typedef struct _xref_t
     
     /* PDF 1.5 or greater: xref can be encoded as a stream */
     int is_stream;
+    
+    /* If the PDF is linear multiple xrefs make up one single version */
+    int is_linear;
+    
+    /* Version of the document this xref belongs */
     int version;
 } xref_t;
 

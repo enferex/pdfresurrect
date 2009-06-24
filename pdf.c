@@ -205,6 +205,10 @@ int pdf_load_xrefs(FILE *fp, pdf_t *pdf)
             memset(&pdf->xrefs[i], 0, sizeof(xref_t));
             continue;
         }
+
+        /* Is this a continuance of the previous xref */
+        else if ((i>0) && pdf->xrefs[i-1].is_linear)
+          pdf->xrefs[i].version = pdf->xrefs[i-1].version;
         else
           pdf->xrefs[i].version = ver++;
 
@@ -349,12 +353,12 @@ void pdf_summarize(
     const char  *name,
     pdf_flag_t   flags)
 {
-    int   i, j, page, n_versions;
+    int   i, j, page, n_versions, linear_sum;
     FILE *dst, *out;
     char *dst_name, *c;
 
-    dst_name = NULL;
     dst = NULL;
+    dst_name = NULL;
 
     if (name)
     {
@@ -378,39 +382,38 @@ void pdf_summarize(
     /* Count verions */
     n_versions = 0;
     for (i=0; i<pdf->n_xrefs; i++)
-      if (pdf->xrefs[i].version)
+      if (pdf->xrefs[i].version && !pdf->xrefs[i].is_linear)
         ++n_versions;
 
     /* Compare each object (if we dont have xref streams) */
     for (i=0; !(const int)pdf->has_xref_streams && i<pdf->n_xrefs; i++)
     {
-        if (pdf->xrefs[i].version)
+        if (!pdf->xrefs[i].version)
+          continue;
+
+        if (flags & PDF_FLAG_QUIET)
+          continue;
+
+        for (j=0; j<pdf->xrefs[i].n_entries; j++)
         {
-            if (flags & PDF_FLAG_QUIET)
+            if (!pdf->xrefs[i].entries[j].obj_id)
               continue;
 
-            for (j=0; j<pdf->xrefs[i].n_entries; j++)
-            {
-                if (!pdf->xrefs[i].entries[j].obj_id)
-                  continue;
+            fprintf(out,
+                    "%s: --%c-- Version %d -- Object %d (%s)",
+                    pdf->name,
+                    pdf_get_object_status(pdf, i, j),
+                    pdf->xrefs[i].version,
+                    pdf->xrefs[i].entries[j].obj_id,
+                    get_type(fp, pdf->xrefs[i].entries[j].obj_id,
+                             &pdf->xrefs[i]));
 
-                fprintf(out,
-                        "%s: --%c-- Version %d -- Object %d (%s)",
-                        pdf->name,
-                        pdf_get_object_status(pdf, i, j),
-                        pdf->xrefs[i].version,
-                        pdf->xrefs[i].entries[j].obj_id,
-                        get_type(fp, pdf->xrefs[i].entries[j].obj_id,
-                                 &pdf->xrefs[i]));
+            page = get_page(pdf->xrefs[i].entries[j].obj_id, &pdf->xrefs[i]);
 
-                page = get_page(pdf->xrefs[i].entries[j].obj_id,
-                                &pdf->xrefs[i]);
-
-                if (page)
-                  fprintf(out, " Page(%d)\n", page);
-                else
-                  fprintf(out, "\n");
-            }
+            if (page)
+              fprintf(out, " Page(%d)\n", page);
+            else
+              fprintf(out, "\n");
         }
     }
 
@@ -434,13 +437,23 @@ void pdf_summarize(
                 pdf->name,
                 n_versions);
 
+        /* If linear, sum the entry count and apply it as a combined
+         * xref total (linear xref + next xref)
+         */
         if (!pdf->has_xref_streams)
           for (i=0; i<pdf->n_xrefs; i++)
-            if (pdf->xrefs[i].version)
-              fprintf(out,
-                      "Version %d -- %d objects\n",
-                      pdf->xrefs[i].version, 
-                      pdf->xrefs[i].n_entries);
+          {
+              if (pdf->xrefs[i].is_linear)
+                linear_sum = pdf->xrefs[i].n_entries; 
+              else if (pdf->xrefs[i].version)
+                fprintf(out,
+                        "Version %d -- %d objects\n",
+                        pdf->xrefs[i].version, 
+                        pdf->xrefs[i].n_entries + linear_sum);
+              
+              if (linear_sum && !pdf->xrefs[i].is_linear)
+                linear_sum = 0;
+           }
     }
     else /* Quiet output */
       fprintf(out, "%s: %d\n", pdf->name, n_versions);
@@ -473,13 +486,52 @@ static int is_valid_xref(FILE *fp, pdf_t *pdf, xref_t *xref)
 {
     int   is_valid;
     long  start;
-    char *c, buf[16];
-
+    char *c, ch, buf[16];
+    
+    memset(buf, 0, sizeof(buf));
     is_valid = 0;
     start = ftell(fp);
     fseek(fp, xref->start, SEEK_SET);
-    fgets(buf, 16, fp);
 
+    /* Special case (Linearized PDF with initial startxref at 0) */
+    if (xref->start == 0)
+    {
+        xref->is_linear = 1;
+
+        /* Find the true EOF */
+        fseek(fp, -8, SEEK_END);
+
+        while (!ferror(fp) && ((ch = fgetc(fp)) != '%'))
+        {
+            ;/* Iterate */
+        }
+
+        if (ferror(fp))
+          return 0;
+       
+        /* Located %%EOF */ 
+        xref->end = ftell(fp) - 1;
+
+        while (!ferror(fp) && fread(buf, 1, 8, fp))
+        {
+            if (strncmp(buf, "trailer", strlen("trailer")) == 0)
+              break;
+            fseek(fp, -9, SEEK_CUR);
+        }
+
+        /* If we found 'trailer' look backwards for 'xref' */
+        if (!ferror(fp))
+          while (!ferror(fp) && ((ch = fgetc(fp)) != 'x'))
+             fseek(fp, -2, SEEK_CUR);
+
+        if (ch == 'x')
+        {
+            xref->start = ftell(fp);
+            fseek(fp, -1, SEEK_CUR);
+        }
+    }
+
+    fgets(buf, 16, fp);
     if (strncmp(buf, "xref", strlen("xref")) == 0)
       is_valid = 1;
 
@@ -629,7 +681,7 @@ static pdf_creator_t *new_creator(int *n_elements)
     if (_c == '>')                   \
     {                                \
         fseek(_fp, _st, SEEK_SET);   \
-        return;                      \
+        continue;                    \
     }                                \
 }
 static void load_creator(FILE *fp, pdf_t *pdf)
@@ -681,7 +733,11 @@ static void load_creator(FILE *fp, pdf_t *pdf)
         END_OF_TRAILER(c, start, fp);
 
         obj_id_buf[buf_idx] = '\0';
+        
         buf = get_object(fp, atoll(obj_id_buf), &pdf->xrefs[i], &sz, NULL);
+        if (!buf && (i>0) && pdf->xrefs[i-1].is_linear)
+          buf = get_object(fp, atoll(obj_id_buf), &pdf->xrefs[i-1], &sz, NULL);
+
         load_creator_from_buf(&pdf->xrefs[i], buf);
         free(buf);
     }
@@ -742,7 +798,7 @@ static void load_creator_from_old_format(xref_t *xref, const char *buf)
 
         /* Find the end of the value */
         length = 0;
-        while (c && ((*c != '\r') && (*c != '\n')))
+        while (c && ((*c != '\r') && (*c != '\n') && (*c != '/')))
         {
             ++c;
             ++length;
