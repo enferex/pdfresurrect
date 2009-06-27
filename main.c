@@ -216,8 +216,9 @@ static void display_creator(FILE *fp, const pdf_t *pdf)
         if (!pdf->xrefs[i].version)
           continue;
         
-        printf("Document History: Version %d\n", pdf->xrefs[i].version);
+        printf("---------- Version %d ----------\n", pdf->xrefs[i].version);
         pdf_display_creator(pdf, i);
+        printf("\n");
     }
 }
 

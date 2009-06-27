@@ -206,15 +206,17 @@ int pdf_load_xrefs(FILE *fp, pdf_t *pdf)
             continue;
         }
 
-        /* Is this a continuance of the previous xref */
-        else if ((i>0) && pdf->xrefs[i-1].is_linear)
-          pdf->xrefs[i].version = pdf->xrefs[i-1].version;
-        else
+        /* Linear xref data applies to most recent ver (resolved after loop) */
+        if (!pdf->xrefs[i].is_linear)
           pdf->xrefs[i].version = ver++;
 
         /*  Load the entries from the xref */
         load_xref_entries(fp, &pdf->xrefs[i]);
     }
+
+    /* Resolve version number of linearized (most recent ver) */
+    if (pdf->xrefs[0].is_linear)
+      pdf->xrefs[0].version = ver - 1;
 
     /* Ok now we have all xref data.  Go through those versions of the 
      * PDF and try to obtain creator information
@@ -280,28 +282,40 @@ char pdf_get_object_status(
     int          xref_idx,
     int          entry_idx)
 {
-    int           i, j;
-    xref_entry_t *prev, *curr;
+    int                 i, curr_ver;
+    const xref_t       *prev_xref;
+    const xref_entry_t *prev, *curr;
 
     curr = &pdf->xrefs[xref_idx].entries[entry_idx];
+    curr_ver = pdf->xrefs[xref_idx].version;
+
+    if (curr_ver == 1)
+      return 'A';
 
     /* Deleted (freed) */
     if (curr->f_or_n == 'f')
       return 'D';
 
-    /* Get previous entry */
+    /* Get previous version */
+    prev_xref = NULL;
+    for (i=xref_idx; i>-1; --i)
+      if (pdf->xrefs[i].version < curr_ver)
+      {
+          prev_xref = &pdf->xrefs[i];
+          break;
+      }
+
+    if (!prev_xref)
+      return '?';
+
+    /* Locate the object in the previous one that matches current one */
     prev = NULL;
-    for (i=xref_idx-1; i>-1; i--)
-    {
-        for (j=0; j<pdf->xrefs[i].n_entries; j++)
-        {
-            if (pdf->xrefs[i].entries[j].obj_id == curr->obj_id)
-            {
-                prev = &pdf->xrefs[i].entries[j];
-                break;
-            }
-        }
-    }
+    for (i=0; i<prev_xref->n_entries; ++i)
+      if (prev_xref->entries[i].obj_id == curr->obj_id)
+      {
+          prev = &prev_xref->entries[i];
+          break;
+      }
 
     /* Added in place of a previously freed id */
     if (!prev || ((prev->f_or_n == 'f') && (curr->f_or_n == 'n')))
@@ -353,7 +367,7 @@ void pdf_summarize(
     const char  *name,
     pdf_flag_t   flags)
 {
-    int   i, j, page, n_versions, linear_sum;
+    int   i, j, page, n_versions, n_entries;
     FILE *dst, *out;
     char *dst_name, *c;
 
@@ -437,23 +451,25 @@ void pdf_summarize(
                 pdf->name,
                 n_versions);
 
-        /* If linear, sum the entry count and apply it as a combined
-         * xref total (linear xref + next xref)
-         */
-        linear_sum = 0;
         if (!pdf->has_xref_streams)
           for (i=0; i<pdf->n_xrefs; i++)
           {
               if (pdf->xrefs[i].is_linear)
-                linear_sum = pdf->xrefs[i].n_entries; 
-              else if (pdf->xrefs[i].version)
+                continue;
+
+              n_entries = pdf->xrefs[i].n_entries;
+
+              /* If we are a linearized PDF, all versions are made from those
+               * objects too.  So count em'
+               */
+              if (pdf->xrefs[0].is_linear)
+                n_entries += pdf->xrefs[0].n_entries; 
+
+              if (pdf->xrefs[i].version)
                 fprintf(out,
                         "Version %d -- %d objects\n",
                         pdf->xrefs[i].version, 
-                        pdf->xrefs[i].n_entries + linear_sum);
-              
-              if (linear_sum && !pdf->xrefs[i].is_linear)
-                linear_sum = 0;
+                        n_entries);
            }
     }
     else /* Quiet output */
