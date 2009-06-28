@@ -35,6 +35,9 @@ static int is_valid_xref(FILE *fp, pdf_t *pdf, xref_t *xref);
 static void load_xref_entries(FILE *fp, xref_t *xref);
 static void load_xref_from_plaintext(FILE *fp, xref_t *xref);
 static void load_xref_from_stream(FILE *fp, xref_t *xref);
+static void resolve_linearized_pdf(pdf_t *pdf);
+
+
 static pdf_creator_t *new_creator(int *n_elements);
 static void load_creator(FILE *fp, pdf_t *);
 static void load_creator_from_buf(xref_t *xref, const char *buf);
@@ -54,7 +57,7 @@ static void add_kid(int id, xref_t *xref);
 static void load_kids(FILE *fp, int pages_id, xref_t *xref);
 
 static const char *get_type(FILE *fp, int obj_id, const xref_t *xref);
-static int get_page(int obj_id, const xref_t *xref);
+/* static int get_page(int obj_id, const xref_t *xref); */
 static char *get_header(FILE *fp);
 
 static char *decode_text_string(const char *str, size_t str_len);
@@ -206,7 +209,7 @@ int pdf_load_xrefs(FILE *fp, pdf_t *pdf)
             continue;
         }
 
-        /* Linear xref data applies to most recent ver (resolved after loop) */
+        /* Linear xref resolution is handled after loop */
         if (!pdf->xrefs[i].is_linear)
           pdf->xrefs[i].version = ver++;
 
@@ -214,9 +217,11 @@ int pdf_load_xrefs(FILE *fp, pdf_t *pdf)
         load_xref_entries(fp, &pdf->xrefs[i]);
     }
 
-    /* Resolve version number of linearized (most recent ver) */
+    /* Now we have all xref tables, if this is linearized, we need
+     * to make adjustments so that things spit out properly
+     */
     if (pdf->xrefs[0].is_linear)
-      pdf->xrefs[0].version = ver - 1;
+      resolve_linearized_pdf(pdf);
 
     /* Ok now we have all xref data.  Go through those versions of the 
      * PDF and try to obtain creator information
@@ -393,18 +398,14 @@ void pdf_summarize(
     /* Send output to file or stdout */
     out = (dst) ? dst : stdout;
 
-    /* Count verions */
-    n_versions = 0;
-    for (i=0; i<pdf->n_xrefs; i++)
-      if (pdf->xrefs[i].version && !pdf->xrefs[i].is_linear)
-        ++n_versions;
+    /* Count versions */
+    n_versions = pdf->n_xrefs;
+    if (pdf->xrefs[0].is_linear)
+      --n_versions;
 
     /* Compare each object (if we dont have xref streams) */
     for (i=0; !(const int)pdf->has_xref_streams && i<pdf->n_xrefs; i++)
     {
-        if (!pdf->xrefs[i].version)
-          continue;
-
         if (flags & PDF_FLAG_QUIET)
           continue;
 
@@ -422,9 +423,11 @@ void pdf_summarize(
                     get_type(fp, pdf->xrefs[i].entries[j].obj_id,
                              &pdf->xrefs[i]));
 
+            /* TODO
             page = get_page(pdf->xrefs[i].entries[j].obj_id, &pdf->xrefs[i]);
+            */
 
-            if (page)
+            if (0 /*page*/)
               fprintf(out, " Page(%d)\n", page);
             else
               fprintf(out, "\n");
@@ -514,8 +517,11 @@ static int is_valid_xref(FILE *fp, pdf_t *pdf, xref_t *xref)
     if (xref->start == 0)
     {
         xref->is_linear = 1;
+        xref->version = 1;
 
-        /* Find the true EOF */
+        /* Find the next xref table that was skipped over and 
+         * acquire that.
+         */
         fseek(fp, -8, SEEK_END);
 
         while (!ferror(fp) && ((ch = fgetc(fp)) != '%'))
@@ -663,6 +669,24 @@ static void load_xref_from_stream(FILE *fp, xref_t *xref)
     /* TODO: decode and analyize stream */
     free(stream);
     return;
+}
+
+
+static void resolve_linearized_pdf(pdf_t *pdf)
+{
+    xref_t buf;
+
+    if (!pdf->xrefs[0].is_linear)
+      return;
+
+    /* Swap Linear with Version 1 */
+    buf = pdf->xrefs[0];
+    pdf->xrefs[0] = pdf->xrefs[1];
+    pdf->xrefs[1] = buf;
+
+    /* Resolve is_linear flag */
+    pdf->xrefs[0].is_linear = 1;
+    pdf->xrefs[1].is_linear = 0;
 }
 
 
@@ -1069,11 +1093,9 @@ static const char *get_type(FILE *fp, int obj_id, const xref_t *xref)
 }
 
 
+/* TODO
 static int get_page(int obj_id, const xref_t *xref)
 {
-    /* TODO */
-    return 0;
-    /*
     int i;
 
     for (i=0; i<xref->n_kids; i++)
@@ -1081,8 +1103,8 @@ static int get_page(int obj_id, const xref_t *xref)
         break;
 
     return i;
-    */
 }
+*/
 
 
 static char *get_header(FILE *fp)
