@@ -35,6 +35,7 @@ static int is_valid_xref(FILE *fp, pdf_t *pdf, xref_t *xref);
 static void load_xref_entries(FILE *fp, xref_t *xref);
 static void load_xref_from_plaintext(FILE *fp, xref_t *xref);
 static void load_xref_from_stream(FILE *fp, xref_t *xref);
+static void get_xref_linear_skipped(FILE *fp, xref_t *xref);
 static void resolve_linearized_pdf(pdf_t *pdf);
 
 
@@ -191,27 +192,33 @@ int pdf_load_xrefs(FILE *fp, pdf_t *pdf)
         /* xref start position */
         pdf->xrefs[i].start = atol(c);
 
-        /* xref end position */
-        pos = ftell(fp);
-        fseek(fp, pdf->xrefs[i].start, SEEK_SET);
-        while (fgets(buf, 256, fp))
-          if ((c = strstr(buf, "%%EOF")))
-            break;
+        /* If xref is 0 handle linear xref table */
+        if (pdf->xrefs[i].start == 0)
+          get_xref_linear_skipped(fp, &pdf->xrefs[i]);
 
-        fseek(fp, c - buf - strlen(buf), SEEK_CUR);
-        pdf->xrefs[i].end = ftell(fp);
+        /* Non-linear, normal operation, so just find the end of the xref */
+        else
+        {
+            /* xref end position */
+            pos = ftell(fp);
+            fseek(fp, pdf->xrefs[i].start, SEEK_SET);
+            while (fgets(buf, 256, fp))
+              if ((c = strstr(buf, "%%EOF")))
+                break;
 
-        /* Look for next EOF and xref data */
-        fseek(fp, pos, SEEK_SET);
+            fseek(fp, c - buf - strlen(buf), SEEK_CUR);
+            pdf->xrefs[i].end = ftell(fp);
+
+            /* Look for next EOF and xref data */
+            fseek(fp, pos, SEEK_SET);
+        }
+
+        /* Check validity */
         if (!is_valid_xref(fp, pdf, &pdf->xrefs[i]))
         {
             memset(&pdf->xrefs[i], 0, sizeof(xref_t));
             continue;
         }
-
-        /* Linear xref resolution is handled after loop */
-        if (!pdf->xrefs[i].is_linear)
-          pdf->xrefs[i].version = ver++;
 
         /*  Load the entries from the xref */
         load_xref_entries(fp, &pdf->xrefs[i]);
@@ -506,53 +513,12 @@ static int is_valid_xref(FILE *fp, pdf_t *pdf, xref_t *xref)
 {
     int   is_valid;
     long  start;
-    char *c, ch, buf[16];
+    char *c, buf[16];
     
     memset(buf, 0, sizeof(buf));
     is_valid = 0;
     start = ftell(fp);
     fseek(fp, xref->start, SEEK_SET);
-
-    /* Special case (Linearized PDF with initial startxref at 0) */
-    if (xref->start == 0)
-    {
-        xref->is_linear = 1;
-        xref->version = 1;
-
-        /* Find the next xref table that was skipped over and 
-         * acquire that.
-         */
-        fseek(fp, -8, SEEK_END);
-
-        while (!ferror(fp) && ((ch = fgetc(fp)) != '%'))
-        {
-            ;/* Iterate */
-        }
-
-        if (ferror(fp))
-          return 0;
-       
-        /* Located %%EOF */ 
-        xref->end = ftell(fp) - 1;
-
-        while (!ferror(fp) && fread(buf, 1, 8, fp))
-        {
-            if (strncmp(buf, "trailer", strlen("trailer")) == 0)
-              break;
-            fseek(fp, -9, SEEK_CUR);
-        }
-
-        /* If we found 'trailer' look backwards for 'xref' */
-        if (!ferror(fp))
-          while (!ferror(fp) && ((ch = fgetc(fp)) != 'x'))
-             fseek(fp, -2, SEEK_CUR);
-
-        if (ch == 'x')
-        {
-            xref->start = ftell(fp);
-            fseek(fp, -1, SEEK_CUR);
-        }
-    }
 
     fgets(buf, 16, fp);
     if (strncmp(buf, "xref", strlen("xref")) == 0)
@@ -672,6 +638,55 @@ static void load_xref_from_stream(FILE *fp, xref_t *xref)
 }
 
 
+static void get_xref_linear_skipped(FILE *fp, xref_t *xref)
+{
+    char *c, ch, buf[256];
+
+    if (xref->start != 0)
+      return;
+
+    /* Special case (Linearized PDF with initial startxref at 0) */
+    xref->is_linear = 1;
+    xref->version = 1;
+
+    /* Find the next xref table that was skipped over and 
+     * acquire that.
+     */
+    while (fgets(buf, 256, fp))
+      if ((c = strstr(buf, "%%EOF")))
+        break;
+
+    if (!c)
+      return;
+
+    /* Seek to %%EOF */
+    fseek(fp, c - buf - strlen(buf), SEEK_CUR);
+    xref->end = ftell(fp);
+   
+    while (!ferror(fp) && fread(buf, 1, 8, fp))
+    {
+        if (strncmp(buf, "trailer", strlen("trailer")) == 0)
+          break;
+        fseek(fp, -9, SEEK_CUR);
+    }
+
+    /* If we found 'trailer' look backwards for 'xref' */
+    if (!ferror(fp))
+      while (!ferror(fp) && ((ch = fgetc(fp)) != 'x'))
+         fseek(fp, -2, SEEK_CUR);
+
+    if (ch == 'x')
+    {
+        xref->start = ftell(fp) - 1;
+        fseek(fp, -1, SEEK_CUR);
+    }
+
+    /* Now continue to next eof ... */
+    fseek(fp, xref->start, SEEK_SET);
+}
+
+
+/* This must only be called after all xref and entries have been acquired */
 static void resolve_linearized_pdf(pdf_t *pdf)
 {
     xref_t buf;
