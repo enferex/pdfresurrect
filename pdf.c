@@ -647,7 +647,6 @@ static void get_xref_linear_skipped(FILE *fp, xref_t *xref)
 
     /* Special case (Linearized PDF with initial startxref at 0) */
     xref->is_linear = 1;
-    xref->version = 1;
 
     /* Find the next xref table that was skipped over and 
      * acquire that.
@@ -699,9 +698,11 @@ static void resolve_linearized_pdf(pdf_t *pdf)
     pdf->xrefs[0] = pdf->xrefs[1];
     pdf->xrefs[1] = buf;
 
-    /* Resolve is_linear flag */
+    /* Resolve is_linear flag and version */
     pdf->xrefs[0].is_linear = 1;
+    pdf->xrefs[0].version = 1;
     pdf->xrefs[1].is_linear = 0;
+    pdf->xrefs[1].version = 1;
 }
 
 
