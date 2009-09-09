@@ -150,8 +150,8 @@ void pdf_get_version(FILE *fp, pdf_t *pdf)
 
 int pdf_load_xrefs(FILE *fp, pdf_t *pdf)
 {
-    long pos, pos_count;
     int  i, ver;
+    long pos, pos_count;
     char x, *c, buf[256];
     
     c = NULL;
@@ -164,15 +164,18 @@ int pdf_load_xrefs(FILE *fp, pdf_t *pdf)
         ++pdf->n_xrefs;
 
     /* Load in the start/end positions */
-    ver = 1;
     fseek(fp, 0, SEEK_SET);
     pdf->xrefs = calloc(1, sizeof(xref_t) * pdf->n_xrefs);
+    ver = 1;
     for (i=0; i<pdf->n_xrefs; i++)
     {
         while (fgets(buf, 256, fp))
           if ((c = strstr(buf, "%%EOF")))
             break;
-        
+
+        /* Set and increment the version */
+        pdf->xrefs[i].version = ver++;
+
         /* Seek to %%EOF */
         fseek(fp, c - buf - strlen(buf), SEEK_CUR);
         pos = ftell(fp);
@@ -493,17 +496,20 @@ void pdf_summarize(
 }
 
 
-void pdf_display_creator(const pdf_t *pdf, int xref_idx)
+/* Returns '1' if we successfully display data (means its probably not xml) */
+int pdf_display_creator(const pdf_t *pdf, int xref_idx)
 {
     int i;
 
     if (!pdf->xrefs[xref_idx].creator)
-      return;
+      return 0;
 
     for (i=0; i<pdf->xrefs[xref_idx].n_creator_entries; ++i)
       printf("%s: %s\n",
              pdf->xrefs[xref_idx].creator[i].key,
              pdf->xrefs[xref_idx].creator[i].value);
+
+    return (i > 0);
 }
 
 
@@ -651,6 +657,7 @@ static void get_xref_linear_skipped(FILE *fp, xref_t *xref)
     /* Find the next xref table that was skipped over and 
      * acquire that.
      */
+    c = NULL;
     while (fgets(buf, 256, fp))
       if ((c = strstr(buf, "%%EOF")))
         break;
@@ -670,6 +677,7 @@ static void get_xref_linear_skipped(FILE *fp, xref_t *xref)
     }
 
     /* If we found 'trailer' look backwards for 'xref' */
+    ch = 0;
     if (!ferror(fp))
       while (!ferror(fp) && ((ch = fgetc(fp)) != 'x'))
          fseek(fp, -2, SEEK_CUR);
@@ -688,6 +696,7 @@ static void get_xref_linear_skipped(FILE *fp, xref_t *xref)
 /* This must only be called after all xref and entries have been acquired */
 static void resolve_linearized_pdf(pdf_t *pdf)
 {
+    int    i;
     xref_t buf;
 
     if (!pdf->xrefs[0].is_linear)
@@ -703,6 +712,10 @@ static void resolve_linearized_pdf(pdf_t *pdf)
     pdf->xrefs[0].version = 1;
     pdf->xrefs[1].is_linear = 0;
     pdf->xrefs[1].version = 1;
+
+    /* Adjust the other version values now */
+    for (i=2; i<pdf->n_xrefs; ++i)
+      --pdf->xrefs[i].version;
 }
 
 

@@ -127,7 +127,8 @@ extern void pdf_summarize(
     const char  *name,
     pdf_flag_t   flags);
 
-extern void pdf_display_creator(const pdf_t *pdf, int xref_idx);
+/* Returns '1' if we successfully display data (means its probably not xml) */
+extern int pdf_display_creator(const pdf_t *pdf, int xref_idx);
 
 
 #endif /* PDF_H_INCLUDE */

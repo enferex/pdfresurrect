@@ -3,7 +3,7 @@
  *
  * pdfresurrect - PDF history extraction tool
  *
- * Copyright (C) 2008 Matt Davis (enferex) of 757Labs (www.757labs.com)
+ * Copyright (C) 2008, 2009 Matt Davis (enferex) of 757Labs (www.757labs.com)
  *
  * main.c is part of pdfresurrect.
  * pdfresurrect is free software: you can redistribute it and/or modify
@@ -215,10 +215,9 @@ static void display_creator(FILE *fp, const pdf_t *pdf)
     {
         if (!pdf->xrefs[i].version)
           continue;
-        
-        printf("---------- Version %d ----------\n", pdf->xrefs[i].version);
-        pdf_display_creator(pdf, i);
-        printf("\n");
+      
+        if (pdf_display_creator(pdf, i))
+          printf("\n");
     }
 }
 

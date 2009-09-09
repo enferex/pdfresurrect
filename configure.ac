@@ -24,6 +24,10 @@ AC_C_CONST
 AC_TYPE_SIZE_T
 
 
+# Check for functions
+AC_CHECK_FUNCS([strdup strtol])
+
+
 # Macros
 CFLAGS="-Wall"
 AC_ARG_ENABLE([debug],

@@ -26,6 +26,14 @@ accurate.  However, this should not prevent the extraction of the versions.
 This output is merely to provide a hint for the user as to what might be
 different between the documents.
 
+Object counts might appear off in linearized PDF documents.  That is not truly
+the case, the reason for this is that each version of the PDF consists of the
+objects that compose the linear portion of the PDF plus all of the objects that
+compose the version in question.  Suppose there is a linearized PDF with 59
+objects in its linear portion, and suppose the PDF has a second version that
+consists of 21 objects.  The total number of objects in "version 2"
+would be 59 + 21 or 80 objects.
+
 
 Building
 --------

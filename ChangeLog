@@ -1,5 +1,14 @@
 -- Version 0.7 --
 
+2009-09-09 Matt Davis <mattdavis9@gmail.com>
+
+* configure.ac: Added function check for strdup and strtol
+
+* pdf.{c,h}: Support to extract PDF creator information (not XML format)
+
+* pdf.c: Count objects from linearized PDFs appropriately
+
+
 2009-05-24 Francois Marier <francois@debian.org>
 
 * pdfresurrect.1: Added Francois Marier's update to the man page
