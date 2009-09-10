@@ -803,10 +803,11 @@ static void load_creator(FILE *fp, pdf_t *pdf)
         END_OF_TRAILER(c, start, fp);
 
         obj_id_buf[buf_idx] = '\0';
-        
+     
+        /* Get the object for the creator data.  If linear, try both xrefs */ 
         buf = get_object(fp, atoll(obj_id_buf), &pdf->xrefs[i], &sz, NULL);
-        if (!buf && (i>0) && pdf->xrefs[i-1].is_linear)
-          buf = get_object(fp, atoll(obj_id_buf), &pdf->xrefs[i-1], &sz, NULL);
+        if (!buf && pdf->xrefs[i].is_linear && (i+1 < pdf->n_xrefs))
+          buf = get_object(fp, atoll(obj_id_buf), &pdf->xrefs[i+1], &sz, NULL);
 
         load_creator_from_buf(&pdf->xrefs[i], buf);
         free(buf);
