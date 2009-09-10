@@ -4,7 +4,9 @@
 
 * pdf.c, main.c: Avoid stalling if we cannot find a trailer for linearized
 *                PDFs.  This is probably because the PDF is using xref
-*                streams.  Thanks to Francois for pointing this out.
+*                streams.  Thanks to Francois for mentioning a stall was
+*                occurring, and then providing the suspect document that caused
+*                such a case.
 
 
 -- Version 0.7 --
