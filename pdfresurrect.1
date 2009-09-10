@@ -20,7 +20,7 @@ pdfresurrect \- tool for extracting/scrubbing versioning data from PDF documents
 .SH SYNOPSIS
 
 .B pdfresurrect
-.RI " file.pdf " [-w] [-q] [-s]
+.RI " file.pdf " [-w] [-q] [-s] [-i]
 .SH DESCRIPTION
 This manual page documents briefly the
 .B pdfresurrect
@@ -41,6 +41,9 @@ Display only the number of versions contained in the PDF.
 .TP
 .B \-s
 Scrub the previous history data from the specified PDF.
+.TP
+.B \-i
+Display the creator information from the specified PDF.
 .SH NOTES
 The scrubbing feature (\-s) should not be trusted for any serious security
 uses.  After using this feature, please verify that it in fact zero'd all
