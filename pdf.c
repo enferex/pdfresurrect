@@ -421,8 +421,8 @@ void pdf_summarize(
 
         for (j=0; j<pdf->xrefs[i].n_entries; j++)
         {
-            if (!pdf->xrefs[i].entries[j].obj_id)
-              continue;
+            //if (!pdf->xrefs[i].entries[j].obj_id)
+            //  continue;
 
             fprintf(out,
                     "%s: --%c-- Version %d -- Object %d (%s)",
