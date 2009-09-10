@@ -254,7 +254,7 @@ int main(int argc, char **argv)
     {
         if (strncmp(argv[i], "-w", 2) == 0)
           do_write = 1;
-        if (strncmp(argv[i], "-i", 2) == 0)
+        else if (strncmp(argv[i], "-i", 2) == 0)
           flags |= PDF_FLAG_DISP_CREATOR;
         else if (strncmp(argv[i], "-q", 2) == 0)
           flags |= PDF_FLAG_QUIET;
