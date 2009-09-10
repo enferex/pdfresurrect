@@ -1,3 +1,12 @@
+-- Version 0.8 --
+
+2009-09-10 Matt Davis <mattdavis9@gmail.com>
+
+* pdf.c, main.c: Avoid stalling if we cannot find a trailer for linearized
+*                PDFs.  This is probably because the PDF is using xref
+*                streams.
+
+
 -- Version 0.7 --
 
 2009-09-09 Matt Davis <mattdavis9@gmail.com>

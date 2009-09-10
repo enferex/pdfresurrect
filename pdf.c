@@ -150,7 +150,7 @@ void pdf_get_version(FILE *fp, pdf_t *pdf)
 
 int pdf_load_xrefs(FILE *fp, pdf_t *pdf)
 {
-    int  i, ver;
+    int  i, ver, is_linear;
     long pos, pos_count;
     char x, *c, buf[256];
     
@@ -219,7 +219,9 @@ int pdf_load_xrefs(FILE *fp, pdf_t *pdf)
         /* Check validity */
         if (!is_valid_xref(fp, pdf, &pdf->xrefs[i]))
         {
+            is_linear = pdf->xrefs[i].is_linear;
             memset(&pdf->xrefs[i], 0, sizeof(xref_t));
+            pdf->xrefs[i].is_linear = is_linear;
             continue;
         }
 
@@ -254,7 +256,7 @@ void pdf_load_pages_kids(FILE *fp, pdf_t *pdf)
     /* Load all kids for all xref tables (versions) */
     for (i=0; i<pdf->n_xrefs; i++)
     {
-        if (pdf->xrefs[i].version)
+        if (pdf->xrefs[i].version && (pdf->xrefs[i].end != 0))
         {
             fseek(fp, pdf->xrefs[i].start, SEEK_SET);
             while (fgetc(fp) != 't')
@@ -413,7 +415,17 @@ void pdf_summarize(
     if (pdf->xrefs[0].is_linear)
       --n_versions;
 
+    /* Ignore bad xref entry */
+    for (i=1; i<pdf->n_xrefs; ++i)
+      if (pdf->xrefs[i].end == 0)
+        --n_versions;
+
+    /* If we have no valid versions but linear, count that */
+    if (!n_versions && pdf->xrefs[0].is_linear)
+      n_versions = 1;
+
     /* Compare each object (if we dont have xref streams) */
+    n_entries = 0;
     for (i=0; !(const int)pdf->has_xref_streams && i<pdf->n_xrefs; i++)
     {
         if (flags & PDF_FLAG_QUIET)
@@ -421,9 +433,7 @@ void pdf_summarize(
 
         for (j=0; j<pdf->xrefs[i].n_entries; j++)
         {
-            //if (!pdf->xrefs[i].entries[j].obj_id)
-            //  continue;
-
+            ++n_entries;
             fprintf(out,
                     "%s: --%c-- Version %d -- Object %d (%s)",
                     pdf->name,
@@ -451,9 +461,9 @@ void pdf_summarize(
          * If we have a 1.5 PDF using streams for xref, we have not objects
          * to display, so let the user know whats up.
          */
-        if (pdf->has_xref_streams)
+        if (pdf->has_xref_streams || !n_entries)
            fprintf(out,
-               "%s: This PDF contains cross reference streams.\n"
+               "%s: This PDF contains potential cross reference streams.\n"
                "%s: An object summary is not available.\n",
                pdf->name,
                pdf->name);
@@ -464,6 +474,7 @@ void pdf_summarize(
                 pdf->name,
                 n_versions);
 
+        /* Count entries for summary */
         if (!pdf->has_xref_streams)
           for (i=0; i<pdf->n_xrefs; i++)
           {
@@ -478,7 +489,7 @@ void pdf_summarize(
               if (pdf->xrefs[0].is_linear)
                 n_entries += pdf->xrefs[0].n_entries; 
 
-              if (pdf->xrefs[i].version)
+              if (pdf->xrefs[i].version && n_entries)
                 fprintf(out,
                         "Version %d -- %d objects\n",
                         pdf->xrefs[i].version, 
@@ -646,6 +657,7 @@ static void load_xref_from_stream(FILE *fp, xref_t *xref)
 
 static void get_xref_linear_skipped(FILE *fp, xref_t *xref)
 {
+    int   err;
     char *c, ch, buf[256];
 
     if (xref->start != 0)
@@ -668,19 +680,26 @@ static void get_xref_linear_skipped(FILE *fp, xref_t *xref)
     /* Seek to %%EOF */
     fseek(fp, c - buf - strlen(buf), SEEK_CUR);
     xref->end = ftell(fp);
-   
-    while (!ferror(fp) && fread(buf, 1, 8, fp))
+
+    /* Locate the trailer */ 
+    err = 0; 
+    while (!(err = ferror(fp)) && fread(buf, 1, 8, fp))
     {
         if (strncmp(buf, "trailer", strlen("trailer")) == 0)
           break;
+        else if ((ftell(fp) - 9) < 0)
+          return;
+
         fseek(fp, -9, SEEK_CUR);
     }
 
+    if (err)
+      return;
+
     /* If we found 'trailer' look backwards for 'xref' */
     ch = 0;
-    if (!ferror(fp))
-      while (!ferror(fp) && ((ch = fgetc(fp)) != 'x'))
-         fseek(fp, -2, SEEK_CUR);
+    while (!ferror(fp) && ((ch = fgetc(fp)) != 'x'))
+      fseek(fp, -2, SEEK_CUR);
 
     if (ch == 'x')
     {
