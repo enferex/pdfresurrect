@@ -28,7 +28,7 @@
 
 #define EXEC_NAME "pdfresurrect"
 #define VER_MAJOR "0"
-#define VER_MINOR "8"
+#define VER_MINOR "9-devel"
 #define VER       VER_MAJOR"."VER_MINOR 
 
 
