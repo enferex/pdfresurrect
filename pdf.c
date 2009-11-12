@@ -871,7 +871,7 @@ static void load_creator_from_xml(xref_t *xref, const char *buf)
 static void load_creator_from_old_format(xref_t *xref, const char *buf)
 {
     int            i, n_eles, length, is_escaped;
-    char          *c, *ascii;
+    char          *c, *ascii, *start;
     pdf_creator_t *info;
 
     info = new_creator(&n_eles);
@@ -891,6 +891,7 @@ static void load_creator_from_old_format(xref_t *xref, const char *buf)
           continue;
 
         /* Find the end of the value */
+        start = c;
         length = is_escaped = 0;
         while (c && ((*c != '\r') && (*c != '\n') && (*c != '<')))
         {
@@ -906,13 +907,15 @@ static void load_creator_from_old_format(xref_t *xref, const char *buf)
             ++length;
         }
 
-        /* Copy c to length and add 1 to length so it gets the closing ')' */
-        c -= length;
+        if (length == 0)
+          continue;
+
+        /* Add 1 to length so it gets the closing ')' when we copy */
         if (length)
           length += 1;
         length = (length > KV_MAX_VALUE_LENGTH) ? KV_MAX_VALUE_LENGTH : length;
-        strncpy(info[i].value, c, length);
-        info[i].value[length] = '\0';
+        strncpy(info[i].value, start, length);
+        info[i].value[KV_MAX_VALUE_LENGTH - 1] = '\0';
     }
 
     /* Go through the values and convert if encoded */
