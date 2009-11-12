@@ -870,7 +870,7 @@ static void load_creator_from_xml(xref_t *xref, const char *buf)
 
 static void load_creator_from_old_format(xref_t *xref, const char *buf)
 {
-    int            i, n_eles, length;
+    int            i, n_eles, length, is_escaped;
     char          *c, *ascii;
     pdf_creator_t *info;
 
@@ -886,15 +886,30 @@ static void load_creator_from_old_format(xref_t *xref, const char *buf)
         while (isspace(*c))
           ++c;
 
+        /* If looking at the start of a pdf token, we have gone too far */
+        if (*c == '/')
+          continue;
+
         /* Find the end of the value */
-        length = 0;
-        while (c && ((*c != '\r') && (*c != '\n') && (*c != '/')))
+        length = is_escaped = 0;
+        while (c && ((*c != '\r') && (*c != '\n') && (*c != '<')))
         {
+            /* Bail out if we see an un-escaped ')' closing character */
+            if (!is_escaped && (*c == ')'))
+              break;
+            else if (*c == '\\')
+              is_escaped = 1;
+            else
+              is_escaped = 0;
+
             ++c;
             ++length;
         }
 
+        /* Copy c to length and add 1 to length so it gets the closing ')' */
         c -= length;
+        if (length)
+          length += 1;
         length = (length > KV_MAX_VALUE_LENGTH) ? KV_MAX_VALUE_LENGTH : length;
         strncpy(info[i].value, c, length);
         info[i].value[length] = '\0';
