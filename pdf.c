@@ -877,7 +877,7 @@ static void load_creator_from_old_format(
     const char *buf)
 {
     int            i, n_eles, length, is_escaped, obj_id;
-    char          *c, *ascii, *start, *s, *saved_buf_search;
+    char          *c, *ascii, *start, *s, *saved_buf_search, *obj;
     pdf_creator_t *info;
 
     info = new_creator(&n_eles);
@@ -905,7 +905,9 @@ static void load_creator_from_old_format(
             obj_id = atoi(c);
             saved_buf_search = c;
             s = saved_buf_search;
-            c = get_object(fp, obj_id, xref, NULL, NULL);
+
+            obj = get_object(fp, obj_id, xref, NULL, NULL);
+            c = obj;
 
             /* Iterate to '(' */
             while (c && (*c != '('))
@@ -946,7 +948,11 @@ static void load_creator_from_old_format(
 
         /* Restore where we were searching from */
         if (saved_buf_search)
-          c = saved_buf_search;
+        {
+            /* Release memory from get_object() called earlier */
+            free(obj);
+            c = saved_buf_search;
+        }
     } /* For all creation information tags */
 
     /* Go through the values and convert if encoded */
