@@ -899,7 +899,7 @@ static void load_creator_from_old_format(
         /* If the value is a number and not a '(' then the data is located in
          * an object we need to fetch, and not inline
          */
-        saved_buf_search = NULL;
+        obj = saved_buf_search = NULL;
         if (isdigit(*c))
         {
             obj_id = atoi(c);
