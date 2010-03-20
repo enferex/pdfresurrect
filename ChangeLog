@@ -3,6 +3,7 @@
 2010-03-20 Matt Davis <mattdavis9@gmail.com>
 
 * pdf.c: Allow for creation data to be pulled from objects as well as inline
+*        Removed strdup and used strncpy for portability purposes
 
 * Makefile.in: Allow for EXTRA_CFLAGS to be specified from command line
 

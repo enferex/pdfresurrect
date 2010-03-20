@@ -39,7 +39,6 @@ static void load_xref_from_stream(FILE *fp, xref_t *xref);
 static void get_xref_linear_skipped(FILE *fp, xref_t *xref);
 static void resolve_linearized_pdf(pdf_t *pdf);
 
-
 static pdf_creator_t *new_creator(int *n_elements);
 static void load_creator(FILE *fp, pdf_t *pdf);
 static void load_creator_from_buf(FILE *fp, xref_t *xref, const char *buf);
@@ -1234,7 +1233,8 @@ static char *decode_text_string(const char *str, size_t str_len)
     /* Regular encoding */
     if (str[0] == '(')
     {
-        ascii = strdup(str);
+        ascii = malloc(strlen(str) + 1);
+        strncpy(ascii, str, strlen(str) + 1);
         return ascii;
     }
     else if (str[0] == '<')
