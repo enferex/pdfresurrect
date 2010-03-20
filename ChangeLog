@@ -8,6 +8,7 @@
 * Makefile.in: Allow for EXTRA_CFLAGS to be specified from command line
 
 * pdfresurrect.1: Updated AUTHORS section to give Francois more props
+		  Adjust date
 
 
 -- Version 0.9 --
