@@ -2,6 +2,8 @@
 
 2010-03-20 Matt Davis <mattdavis9@gmail.com>
 
+* main.c: Add additional copyright year 
+
 * pdf.c: Allow for creation data to be pulled from objects as well as inline
 *        Removed strdup and used strncpy for portability purposes
 
