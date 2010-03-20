@@ -2,7 +2,7 @@ APP = pdfresurrect
 MANPAGE = pdfresurrect.1
 OBJS = main.o pdf.o
 CC = @CC@
-CFLAGS = @CFLAGS@
+CFLAGS = @CFLAGS@ $(EXTRA_CFLAGS)
 PREFIX = @prefix@
 
 all: $(OBJS) $(APP)
