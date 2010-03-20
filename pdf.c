@@ -3,7 +3,8 @@
  *
  * pdfresurrect - PDF history extraction tool
  *
- * Copyright (C) 2008, 2009 Matt Davis (enferex) of 757Labs (www.757labs.com)
+ * Copyright (C) 2008, 2009, 2010 Matt Davis (enferex) of 757Labs
+ * (www.757labs.com)
  *
  * pdf.c is part of pdfresurrect.
  * pdfresurrect is free software: you can redistribute it and/or modify
@@ -40,10 +41,13 @@ static void resolve_linearized_pdf(pdf_t *pdf);
 
 
 static pdf_creator_t *new_creator(int *n_elements);
-static void load_creator(FILE *fp, pdf_t *);
-static void load_creator_from_buf(xref_t *xref, const char *buf);
+static void load_creator(FILE *fp, pdf_t *pdf);
+static void load_creator_from_buf(FILE *fp, xref_t *xref, const char *buf);
 static void load_creator_from_xml(xref_t *xref, const char *buf);
-static void load_creator_from_old_format(xref_t *xref, const char *buf);
+static void load_creator_from_old_format(
+    FILE       *fp,
+    xref_t     *xref,
+    const char *buf);
 
 static char *get_object_from_here(FILE *fp, size_t *size, int *is_stream);
 
@@ -828,7 +832,7 @@ static void load_creator(FILE *fp, pdf_t *pdf)
         if (!buf && pdf->xrefs[i].is_linear && (i+1 < pdf->n_xrefs))
           buf = get_object(fp, atoll(obj_id_buf), &pdf->xrefs[i+1], &sz, NULL);
 
-        load_creator_from_buf(&pdf->xrefs[i], buf);
+        load_creator_from_buf(fp, &pdf->xrefs[i], buf);
         free(buf);
     }
 
@@ -836,7 +840,7 @@ static void load_creator(FILE *fp, pdf_t *pdf)
 }
 
 
-static void load_creator_from_buf(xref_t *xref, const char *buf)
+static void load_creator_from_buf(FILE *fp, xref_t *xref, const char *buf)
 {
     int   is_xml;
     char *c;
@@ -858,7 +862,7 @@ static void load_creator_from_buf(xref_t *xref, const char *buf)
     if (is_xml)
       load_creator_from_xml(xref, buf);
     else
-      load_creator_from_old_format(xref, buf);
+      load_creator_from_old_format(fp, xref, buf);
 }
 
 
@@ -868,10 +872,13 @@ static void load_creator_from_xml(xref_t *xref, const char *buf)
 }
 
 
-static void load_creator_from_old_format(xref_t *xref, const char *buf)
+static void load_creator_from_old_format(
+    FILE       *fp,
+    xref_t     *xref,
+    const char *buf)
 {
-    int            i, n_eles, length, is_escaped;
-    char          *c, *ascii, *start;
+    int            i, n_eles, length, is_escaped, obj_id;
+    char          *c, *ascii, *start, *s, *saved_buf_search;
     pdf_creator_t *info;
 
     info = new_creator(&n_eles);
@@ -890,6 +897,27 @@ static void load_creator_from_old_format(xref_t *xref, const char *buf)
         if (*c == '/')
           continue;
 
+        /* If the value is a number and not a '(' then the data is located in
+         * an object we need to fetch, and not inline
+         */
+        saved_buf_search = NULL;
+        if (isdigit(*c))
+        {
+            obj_id = atoi(c);
+            saved_buf_search = c;
+            s = saved_buf_search;
+            c = get_object(fp, obj_id, xref, NULL, NULL);
+
+            /* Iterate to '(' */
+            while (c && (*c != '('))
+             ++c;
+
+            /* Advance the search to the next token */
+            while (s && ((*s != '\r') || (*s != '\n')) && (*s == '/'))
+              ++s;
+            saved_buf_search = s;
+        }
+          
         /* Find the end of the value */
         start = c;
         length = is_escaped = 0;
@@ -916,7 +944,11 @@ static void load_creator_from_old_format(xref_t *xref, const char *buf)
         length = (length > KV_MAX_VALUE_LENGTH) ? KV_MAX_VALUE_LENGTH : length;
         strncpy(info[i].value, start, length);
         info[i].value[KV_MAX_VALUE_LENGTH - 1] = '\0';
-    }
+
+        /* Restore where we were searching from */
+        if (saved_buf_search)
+          c = saved_buf_search;
+    } /* For all creation information tags */
 
     /* Go through the values and convert if encoded */
     for (i=0; i<n_eles; ++i)
