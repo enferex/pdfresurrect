@@ -28,6 +28,28 @@
 #include "main.h"
 
 
+/* 
+ * Macros
+ */
+
+/* SAFE_F
+ *
+ * Safe file read: use for fgetc() calls, this is really ugly looking. 
+ * _fp:   FILE * handle
+ * _expr: The expression with fgetc() in it:
+ * 
+ *  example: If we get a character from the file and it is ascii character 'a'
+ *           This assumes the coder wants to store the 'a' in variable ch
+ *           Kinda pointless if you already know that you have 'a', but for
+ *           illustrative purposes.
+ *
+ *  if (SAFE_F(my_fp, ((c=fgetc(my_fp)) == 'a')))
+ *              do_way_cool_stuff();
+ */
+#define SAFE_F(_fp, _expr) \
+    ((!ferror(_fp) && !feof(_fp) && (_expr)))
+
+
 /*
  * Forwards
  */
@@ -185,7 +207,7 @@ int pdf_load_xrefs(FILE *fp, pdf_t *pdf)
 
         /* Rewind until we find end of "startxref" */
         pos_count = 0;
-        while ((x = fgetc(fp)) != 'f')
+        while (SAFE_F(fp, ((x = fgetc(fp)) != 'f')))
           fseek(fp, pos - (++pos_count), SEEK_SET);
         
         /* Suck in end of "startxref" to start of %%EOF */
@@ -262,7 +284,7 @@ void pdf_load_pages_kids(FILE *fp, pdf_t *pdf)
         if (pdf->xrefs[i].version && (pdf->xrefs[i].end != 0))
         {
             fseek(fp, pdf->xrefs[i].start, SEEK_SET);
-            while (fgetc(fp) != 't')
+            while (SAFE_F(fp, (fgetc(fp) != 't')))
                 ; /* Iterate to trailer */
 
             /* Get root catalog */
@@ -376,6 +398,7 @@ void pdf_zero_object(
     for (i=0; i<obj_sz; i++)
       fputc('0', fp);
 
+    printf("Zeroed object %d\n", entry->obj_id);
     free(obj);
 }
 
@@ -528,7 +551,8 @@ int pdf_display_creator(const pdf_t *pdf, int xref_idx)
 
 
 /* Checks if the xref is valid and sets 'is_stream' flag if the xref is a
- * stream (PDF 1.5 or higher) */
+ * stream (PDF 1.5 or higher)
+ */
 static int is_valid_xref(FILE *fp, pdf_t *pdf, xref_t *xref)
 {
     int   is_valid;
@@ -584,7 +608,7 @@ static void load_xref_from_plaintext(FILE *fp, xref_t *xref)
     pos = xref->end;
     fseek(fp, pos, SEEK_SET);
     while (ftell(fp) != 0)
-      if (fgetc(fp) == '/' && fgetc(fp) == 'S')
+      if (SAFE_F(fp, (fgetc(fp) == '/' && fgetc(fp) == 'S')))
         break;
       else
         fseek(fp, --pos, SEEK_SET);
@@ -701,7 +725,7 @@ static void get_xref_linear_skipped(FILE *fp, xref_t *xref)
 
     /* If we found 'trailer' look backwards for 'xref' */
     ch = 0;
-    while (!ferror(fp) && ((ch = fgetc(fp)) != 'x'))
+    while (SAFE_F(fp, ((ch = fgetc(fp)) != 'x')))
       fseek(fp, -2, SEEK_CUR);
 
     if (ch == 'x')
@@ -793,24 +817,25 @@ static void load_creator(FILE *fp, pdf_t *pdf)
 
         /* Find trailer */
         fseek(fp, pdf->xrefs[i].start, SEEK_SET);
-        while (fgetc(fp) != 't')
+        while (SAFE_F(fp, (fgetc(fp) != 't')))
             ; /* Iterate to "trailer" */
 
         /* Look for "<< ....... /Info ......" */
-        while ((c = fgetc(fp)) != '>')
-          if ((c == '/') && (fgetc(fp) == 'I') && ((fgetc(fp) == 'n')))
+        while (SAFE_F(fp, ((c = fgetc(fp)) != '>')))
+          if (SAFE_F(fp, ((c == '/') &&
+                          (fgetc(fp) == 'I') && ((fgetc(fp) == 'n')))))
             break;
 
         /* Could not find /Info in trailer */
         END_OF_TRAILER(c, start, fp);
 
-        while (!isspace(c = fgetc(fp)) && (c != '>'))
+        while (SAFE_F(fp, (!isspace(c = fgetc(fp)) && (c != '>'))))
             ; /* Iterate to first white space /Info<space><data> */
 
         /* No space between /Info and it's data */
         END_OF_TRAILER(c, start, fp);
 
-        while (isspace(c = fgetc(fp)) && (c != '>'))
+        while (SAFE_F(fp, (isspace(c = fgetc(fp)) && (c != '>'))))
             ; /* Iterate right on top of first non-whitespace /Info data */
 
         /* No data for /Info */
@@ -819,7 +844,7 @@ static void load_creator(FILE *fp, pdf_t *pdf)
         /* Get obj id as number */
         buf_idx = 0;
         obj_id_buf[buf_idx++] = c;
-        while (!isspace(c = fgetc(fp)) && (c != '>'))
+        while (SAFE_F(fp, (!isspace(c = fgetc(fp)) && (c != '>'))))
           obj_id_buf[buf_idx++] = c;
 
         END_OF_TRAILER(c, start, fp);
