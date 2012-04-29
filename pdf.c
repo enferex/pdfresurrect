@@ -821,6 +821,7 @@ static void load_creator(FILE *fp, pdf_t *pdf)
             ; /* Iterate to "trailer" */
 
         /* Look for "<< ....... /Info ......" */
+        c = '\0';
         while (SAFE_F(fp, ((c = fgetc(fp)) != '>')))
           if (SAFE_F(fp, ((c == '/') &&
                           (fgetc(fp) == 'I') && ((fgetc(fp) == 'n')))))
