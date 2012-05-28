@@ -29,7 +29,7 @@ AC_CHECK_FUNCS([strdup strtol])
 
 
 # Macros
-CFLAGS="-Wall"
+CFLAGS="$CFLAGS -Wall"
 AC_ARG_ENABLE([debug],
               [AC_HELP_STRING([--enable-debug], [Enable debugging output])],
               [CFLAGS="$CFLAGS -g3 -DDEBUG"],
