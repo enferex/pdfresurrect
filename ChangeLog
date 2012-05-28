@@ -1,3 +1,31 @@
+-- Version 0.11 --
+
+2012-05-28 Matt Davis <mattdavis9@gmail.com>
+
+* pdf.c: Prevent invalid access and double frees when the xref table is 
+*        of a zero length (thanks valgrind, oh so sexxy).
+*
+* ChangeLog: Correct a line not prefixed with an asterisk.
+
+2012-04-29 Matt Davis <mattdavis9@gmail.com>
+
+* pdf.c: Initialize a variable
+*        
+*        Add a macro for safe file access        
+
+2010-03-21 Matt Davis <mattdavis9@gmail.com>
+
+* pdf.c: Clean up memory leak just introduced by the new creator-from-object
+*        piece
+*
+*        Removed strdup and used strndup for portability
+*
+*        Allow creation tags to be picked up even if they are stored in objects
+*        and not inline.
+*
+*        Initialize a pointer
+
+
 -- Version 0.10 --
 
 2010-03-20 Matt Davis <mattdavis9@gmail.com>
@@ -10,7 +38,7 @@
 * Makefile.in: Allow for EXTRA_CFLAGS to be specified from command line
 
 * pdfresurrect.1: Updated AUTHORS section to give Francois more props
-		  Adjust date
+*	          Adjust date
 
 
 -- Version 0.9 --
