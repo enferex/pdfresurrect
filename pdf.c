@@ -188,6 +188,9 @@ int pdf_load_xrefs(FILE *fp, pdf_t *pdf)
       if (strstr(buf, "%%EOF"))
         ++pdf->n_xrefs;
 
+    if (!pdf->n_xrefs)
+      return 0;
+
     /* Load in the start/end positions */
     fseek(fp, 0, SEEK_SET);
     pdf->xrefs = calloc(1, sizeof(xref_t) * pdf->n_xrefs);
@@ -438,7 +441,7 @@ void pdf_summarize(
 
     /* Count versions */
     n_versions = pdf->n_xrefs;
-    if (pdf->xrefs[0].is_linear)
+    if (n_versions && pdf->xrefs[0].is_linear)
       --n_versions;
 
     /* Ignore bad xref entry */
@@ -447,7 +450,7 @@ void pdf_summarize(
         --n_versions;
 
     /* If we have no valid versions but linear, count that */
-    if (!n_versions && pdf->xrefs[0].is_linear)
+    if (!pdf->n_xrefs || (!n_versions && pdf->xrefs[0].is_linear))
       n_versions = 1;
 
     /* Compare each object (if we dont have xref streams) */
@@ -1248,7 +1251,7 @@ static char *get_header(FILE *fp)
     
     start = ftell(fp);
     fseek(fp, 0, SEEK_SET);
-    fread(header, 1024, 1, fp);
+    fread(header, 1023, 1, fp);
     fseek(fp, start, SEEK_SET);
     
     return header;
