@@ -3,8 +3,8 @@
  *
  * pdfresurrect - PDF history extraction tool
  *
- * Copyright (C) 2008, 2009,2010 Matt Davis (enferex) of 757Labs
- * (www.757labs.com)
+ * Copyright (C) 2008, 2009, 2010, 2012 Matt Davis (enferex) of 757Labs
+ * (www.757labs.org)
  *
  * main.c is part of pdfresurrect.
  * pdfresurrect is free software: you can redistribute it and/or modify
@@ -33,8 +33,9 @@
 
 static void usage(void)
 {
-    printf(EXEC_NAME " Copyright (C) 2008, 2009, 2010 Matt Davis (enferex)\n"
-           "of 757labs (www.757labs.com)\n"
+    printf(EXEC_NAME " Copyright (C) 2008, 2009, 2010, 2012 "
+           "Matt Davis (enferex)\n"
+           "of 757labs (www.757labs.org)\n"
            "This program comes with ABSOLUTELY NO WARRANTY\n"
            "This is free software, and you are welcome to redistribute it\n"
            "under certain conditions.  For details see the file 'LICENSE'\n"
