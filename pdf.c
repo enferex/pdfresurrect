@@ -571,7 +571,7 @@ static int is_valid_xref(FILE *fp, pdf_t *pdf, xref_t *xref)
     if (strncmp(buf, "xref", strlen("xref")) == 0)
       is_valid = 1;
 
-    /* PDF v1.5 + allows for xref data to be stored in streams vs plaintext */
+    /* PDF v1.5+ allows for xref data to be stored in streams vs plaintext */
     else
     {  
         fseek(fp, xref->start, SEEK_SET);
