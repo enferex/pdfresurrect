@@ -32,7 +32,7 @@ AC_CHECK_FUNCS([strdup strtol])
 CFLAGS="$CFLAGS -Wall"
 AC_ARG_ENABLE([debug],
               [AC_HELP_STRING([--enable-debug], [Enable debugging output])],
-              [CFLAGS="$CFLAGS -g3 -DDEBUG"],
+              [CFLAGS="$CFLAGS -O0 -g3 -DDEBUG"],
               [CFLAGS="$CFLAGS -O3"])
 
 AC_SUBST(CFLAGS)
