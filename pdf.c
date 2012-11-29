@@ -87,6 +87,7 @@ static const char *get_type(FILE *fp, int obj_id, const xref_t *xref);
 static char *get_header(FILE *fp);
 
 static char *decode_text_string(const char *str, size_t str_len);
+static int get_next_eof(FILE *fp);
 
 
 /*
@@ -184,9 +185,8 @@ int pdf_load_xrefs(FILE *fp, pdf_t *pdf)
     /* Count number of xrefs */
     pdf->n_xrefs = 0;
     fseek(fp, 0, SEEK_SET);
-    while (fgets(buf, 256, fp))
-      if (strstr(buf, "%%EOF"))
-        ++pdf->n_xrefs;
+    while (get_next_eof(fp) >= 0)
+      ++pdf->n_xrefs;
 
     if (!pdf->n_xrefs)
       return 0;
@@ -197,16 +197,12 @@ int pdf_load_xrefs(FILE *fp, pdf_t *pdf)
     ver = 1;
     for (i=0; i<pdf->n_xrefs; i++)
     {
-        while (fgets(buf, 256, fp))
-          if ((c = strstr(buf, "%%EOF")))
-            break;
+        /* Seek to %%EOF */
+        if ((pos = get_next_eof(fp)) < 0)
+          break;
 
         /* Set and increment the version */
         pdf->xrefs[i].version = ver++;
-
-        /* Seek to %%EOF */
-        fseek(fp, c - buf - strlen(buf), SEEK_CUR);
-        pos = ftell(fp);
 
         /* Rewind until we find end of "startxref" */
         pos_count = 0;
@@ -233,12 +229,7 @@ int pdf_load_xrefs(FILE *fp, pdf_t *pdf)
             /* xref end position */
             pos = ftell(fp);
             fseek(fp, pdf->xrefs[i].start, SEEK_SET);
-            while (fgets(buf, 256, fp))
-              if ((c = strstr(buf, "%%EOF")))
-                break;
-
-            fseek(fp, c - buf - strlen(buf), SEEK_CUR);
-            pdf->xrefs[i].end = ftell(fp);
+            pdf->xrefs[i].end = get_next_eof(fp);
 
             /* Look for next EOF and xref data */
             fseek(fp, pos, SEEK_SET);
@@ -250,6 +241,8 @@ int pdf_load_xrefs(FILE *fp, pdf_t *pdf)
             is_linear = pdf->xrefs[i].is_linear;
             memset(&pdf->xrefs[i], 0, sizeof(xref_t));
             pdf->xrefs[i].is_linear = is_linear;
+            rewind(fp);
+            get_next_eof(fp);
             continue;
         }
 
@@ -687,8 +680,8 @@ static void load_xref_from_stream(FILE *fp, xref_t *xref)
 
 static void get_xref_linear_skipped(FILE *fp, xref_t *xref)
 {
-    int   err;
-    char *c, ch, buf[256];
+    int  err;
+    char ch, buf[256];
 
     if (xref->start != 0)
       return;
@@ -696,20 +689,9 @@ static void get_xref_linear_skipped(FILE *fp, xref_t *xref)
     /* Special case (Linearized PDF with initial startxref at 0) */
     xref->is_linear = 1;
 
-    /* Find the next xref table that was skipped over and 
-     * acquire that.
-     */
-    c = NULL;
-    while (fgets(buf, 256, fp))
-      if ((c = strstr(buf, "%%EOF")))
-        break;
-
-    if (!c)
-      return;
-
     /* Seek to %%EOF */
-    fseek(fp, c - buf - strlen(buf), SEEK_CUR);
-    xref->end = ftell(fp);
+    if ((xref->end = get_next_eof(fp)) < 0)
+      return;
 
     /* Locate the trailer */ 
     err = 0; 
@@ -1301,4 +1283,28 @@ static char *decode_text_string(const char *str, size_t str_len)
     }
 
     return ascii;
+}
+
+
+/* Return the offset to the beginning of the %%EOF string.
+ * A negative value is returned when done scanning.
+ */
+static int get_next_eof(FILE *fp)
+{
+    int match, c;
+    const char buf[] = "%%EOF";
+
+    match = 0;
+    while ((c = fgetc(fp)) != EOF)
+    {
+        if (c == buf[match])
+          ++match;
+        else
+          match = 0;
+
+        if (match == 5) /* strlen("%%EOF") */
+          return ftell(fp) - 5;
+    }
+
+    return -1;
 }
