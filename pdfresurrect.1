@@ -16,7 +16,7 @@
 .\" .sp <n>    insert n+1 empty lines
 .\" for manpage-specific macros, see man(7)
 .SH NAME
-pdfresurrect \- tool for extracting/scrubbing versioning data from PDF documents
+pdfresurrect \- tool for extracting versioning data from PDF documents
 .SH SYNOPSIS
 
 .B pdfresurrect
@@ -29,7 +29,7 @@ command.
 .\" TeX users may be more comfortable with the \fB<whatever>\fP and
 .\" \fI<whatever>\fP escape sequences to invoke bold face and italics,
 .\" respectively.
-\fBpdfresurrect\fP is a tool for extracting/scrubbing versioning data from PDF documents.
+\fBpdfresurrect\fP is a tool for extracting versioning data from PDF documents.
 .SH OPTIONS
 A summary of options is included below.
 .TP
@@ -47,7 +47,7 @@ Display the creator information from the specified PDF.
 .SH NOTES
 The scrubbing feature (\-s) should not be trusted for any serious security
 uses.  After using this feature, please verify that it in fact zero'd all
-of the objects that were of concern (those objects that were to be zero'd).
+of the objects that were of concern.
 .PP
 This tool relies on the application reading the pdfresurrect extracted versions
 to treat the last xref(cross-reference) table as the most recent in the
