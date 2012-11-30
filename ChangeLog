@@ -1,5 +1,10 @@
 -- Version 0.12 --
 
+2012-11-30 Matt Davis <mattdavis9@gmail.com>
+
+* pdfresurrect.1: Less emphasis on scrubbing. 
+*                 Cleaned up some wording.
+
 2012-11-29 Matt Davis <mattdavis9@gmail.com>
 
 * pdf.c: Use a better EOF finding algorithm.
