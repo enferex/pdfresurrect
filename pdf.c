@@ -925,7 +925,7 @@ static void load_creator_from_old_format(
              ++c;
 
             /* Advance the search to the next token */
-            while (s && ((*s != '\r') || (*s != '\n')) && (*s == '/'))
+            while (s && ((*s != '\r') && (*s != '\n')) && (*s == '/'))
               ++s;
             saved_buf_search = s;
         }
