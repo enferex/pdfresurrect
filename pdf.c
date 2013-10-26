@@ -3,7 +3,7 @@
  *
  * pdfresurrect - PDF history extraction tool
  *
- * Copyright (C) 2008, 2009, 2010, 2012 Matt Davis (enferex) of 757Labs
+ * Copyright (C) 2008-2010, 2012-2013 Matt Davis (enferex) of 757Labs
  * (www.757labs.org)
  *
  * pdf.c is part of pdfresurrect.
@@ -925,7 +925,7 @@ static void load_creator_from_old_format(
              ++c;
 
             /* Advance the search to the next token */
-            while (s && ((*s != '\r') && (*s != '\n')) && (*s == '/'))
+            while (s && (*s == '/'))
               ++s;
             saved_buf_search = s;
         }
