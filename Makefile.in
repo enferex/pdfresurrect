@@ -4,7 +4,10 @@ OBJS = main.o pdf.o
 CC = @CC@
 CFLAGS = @CFLAGS@ @CPPFLAGS@ $(EXTRA_CFLAGS)
 LDFLAGS = @LDFLAGS@
-PREFIX = @prefix@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+mandir = @mandir@
 
 all: $(OBJS) $(APP)
 
@@ -15,12 +18,12 @@ $(APP): $(OBJS)
 	$(CC) -o $@ -c $< $(CFLAGS)
 
 install:
-	cp $(APP) $(DESTDIR)$(PREFIX)/bin/
-	cp $(MANPAGE) $(DESTDIR)$(PREFIX)/man/man1/
+	cp $(APP) $(DESTDIR)$(bindir)
+	cp $(MANPAGE) $(DESTDIR)$(mandir)/man1
 
 uninstall:
-	rm $(DESTDIR)$(PREFIX)/bin/$(APP)
-	rm $(DESTDIR)$(PREFIX)/man/man1/$(MANPAGE)
+	rm $(DESTDIR)$(bindir)/$(APP)
+	rm $(DESTDIR)$(mandir)/man1/$(MANPAGE)
 
 clean:
 	rm -rfv $(OBJS) $(APP)
