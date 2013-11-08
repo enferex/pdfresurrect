@@ -4,3 +4,5 @@ Francois Marier: Original man page, modified Makefile.in
                  and modified configure.ac
 
 David Binderman: Finding a bug and offering a correction suggestion
+
+Ryan Schmidt: MacPorts Makefile work
