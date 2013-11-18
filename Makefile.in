@@ -19,6 +19,7 @@ $(APP): $(OBJS)
 
 install:
 	cp $(APP) $(DESTDIR)$(bindir)
+	mkdir -p $(DESTDIR)$(mandir)/man1
 	cp $(MANPAGE) $(DESTDIR)$(mandir)/man1
 
 uninstall:
