@@ -63,8 +63,8 @@ static void write_version(
     const char *dirname,
     xref_t     *xref)
 {
-    long  start, end, startxref, pos, pos_count;
-    char *c, *xref_buf, *new_fname, data, peek;
+    long  start;
+    char *c, *new_fname, data;
     FILE *new_fp;
     
     start = ftell(fp);
@@ -88,44 +88,13 @@ static void write_version(
     fseek(fp, 0, SEEK_SET);
     while (fread(&data, 1, 1, fp))
       fwrite(&data, 1, 1, new_fp);
-    fprintf(new_fp, "\r\n");
 
-    /* Go backwards till we hit the end of 'startxref' */
-    fseek(fp, xref->end, SEEK_SET);
-    pos = xref->end;
-    pos_count = 0;
-    while ((peek = fgetc(fp) != 'f'))
-      fseek(fp, pos - (++pos_count), SEEK_SET);
-    end = ftell(fp);
-
-    /* Suck in xref to copy */
-    fseek(fp, xref->start, SEEK_SET);
-    xref_buf = malloc(end - xref->start);
-    if (!(fread(xref_buf, end - xref->start, 1, fp)))
-    {
-        ERR("Could not read %d bytes from document\n",
-             (int)(xref->end - xref->start));
-
-        fclose(new_fp);
-        free(new_fname);
-        fseek(fp, start, SEEK_SET);
-        return;
-    }
-
-    /* Append that copy (ending at 'startxref') */
-    startxref = ftell(new_fp);
-    if (!(fwrite(xref_buf, end - xref->start, 1, new_fp)))
-    {
-        ERR("Could not write %d bytes to document\n",
-            (int)(end - xref->start));
-    }
-
-    fprintf(new_fp, "\r\n%ld\r\n%%%%EOF", startxref);
+    /* Emit an older startxref, refering to an older version. */
+    fprintf(new_fp, "\r\nstartxref\r\n%ld\r\n%%%%EOF", xref->start);
 
     /* Clean */
     fclose(new_fp);
     free(new_fname);
-    free(xref_buf);
     fseek(fp, start, SEEK_SET);
 }
 

@@ -1,3 +1,11 @@
+-- Version 0.14 --
+
+2017-11-24 Matt Davis <mattdavis9@gmail.com>
+
+* main.c: Simplify the writing of older version.
+*         Only emit a startxref block with an older xref
+*         position, and nothing more.
+
 -- Version 0.13 --
 
 2017-11-24 Matt Davis <mattdavis9@gmail.com>
