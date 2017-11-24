@@ -1,3 +1,19 @@
+-- Version 0.13 --
+
+2017-11-24 Matt Davis <mattdavis9@gmail.com>
+
+* pdf.c: Bug fix - guard xref access during scrubbing.
+
+2013-11-17 Matt Davis <mattdavis9@gmail.com>
+* Makefile.in: Add the man1 directory if it does not exit.
+
+2013-11-7 Ryan Schmidt <github@ryandesign.com>
+* Makefile.in: Honor configure argument:
+*              --exec-prefix, --bindir, --datarootdir, --mandir
+
+2013-10-25: David Binderman.
+* pdf.c: Added a logical fix submitted by David B.
+
 -- Version 0.12 --
 
 2012-11-30 Matt Davis <mattdavis9@gmail.com>
