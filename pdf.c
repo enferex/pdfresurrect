@@ -3,8 +3,10 @@
  *
  * pdfresurrect - PDF history extraction tool
  *
- * Copyright (C) 2008-2010, 2012-2013 Matt Davis (enferex) of 757Labs
- * (www.757labs.org)
+ * Copyright (C) 2008-2010, 2012-2013, 2017, Matt Davis (enferex)
+ *
+ * Special thanks to 757labs (757 crew), they are a great group
+ * of people to hack on projects and brainstorm with.
  *
  * pdf.c is part of pdfresurrect.
  * pdfresurrect is free software: you can redistribute it and/or modify
@@ -729,6 +731,9 @@ static void resolve_linearized_pdf(pdf_t *pdf)
 {
     int    i;
     xref_t buf;
+
+    if (pdf->n_xrefs < 2)
+      return;
 
     if (!pdf->xrefs[0].is_linear)
       return;
