@@ -18,6 +18,7 @@ $(APP): $(OBJS)
 	$(CC) -o $@ -c $< $(CFLAGS)
 
 install:
+	mkdir -p $(DESTDIR)$(bindir)
 	cp $(APP) $(DESTDIR)$(bindir)
 	mkdir -p $(DESTDIR)$(mandir)/man1
 	cp $(MANPAGE) $(DESTDIR)$(mandir)/man1
