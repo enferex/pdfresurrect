@@ -235,7 +235,7 @@ int pdf_load_xrefs(FILE *fp, pdf_t *pdf)
         /* Suck in end of "startxref" to start of %%EOF */
         memset(buf, 0, sizeof(buf));
         SAFE_E(fread(buf, 1, pos_count, fp), pos_count,
-               "Failed to read startxref.");
+               "Failed to read startxref.\n");
         c = buf;
         while (*c == ' ' || *c == '\n' || *c == '\r')
           ++c;
@@ -310,7 +310,7 @@ void pdf_load_pages_kids(FILE *fp, pdf_t *pdf)
             /* Get root catalog */
             sz = pdf->xrefs[i].end - ftell(fp);
             buf = malloc(sz + 1);
-            SAFE_E(fread(buf, 1, sz, fp), sz, "Failed to load /Root");
+            SAFE_E(fread(buf, 1, sz, fp), sz, "Failed to load /Root.\n");
             buf[sz] = '\0';
             if (!(c = strstr(buf, "/Root")))
             {
@@ -634,9 +634,9 @@ static void load_xref_from_plaintext(FILE *fp, xref_t *xref)
       if (SAFE_F(fp, (fgetc(fp) == '/' && fgetc(fp) == 'S')))
         break;
       else
-        SAFE_E(fseek(fp, --pos, SEEK_SET), 0, "Failed to seek to xref /Size.");
+        SAFE_E(fseek(fp, --pos, SEEK_SET), 0, "Failed seek to xref /Size.\n");
 
-    SAFE_E(fread(buf, 1, 21, fp), 21, "Failed to load entry Size string.");
+    SAFE_E(fread(buf, 1, 21, fp), 21, "Failed to load entry Size string.\n");
     xref->n_entries = atoi(buf + strlen("ize "));
     xref->entries = calloc(1, xref->n_entries * sizeof(struct _xref_entry));
 
@@ -1024,7 +1024,7 @@ static char *get_object_from_here(FILE *fp, size_t *size, int *is_stream)
 
     /* Object ID */
     memset(buf, 0, 256);
-    SAFE_E(fread(buf, 1, 255, fp), 255, "Failed to load object ID.");
+    SAFE_E(fread(buf, 1, 255, fp), 255, "Failed to load object ID.\n");
     if (!(obj_id = atoi(buf)))
     {
         fseek(fp, start, SEEK_SET);
@@ -1263,7 +1263,7 @@ static char *get_header(FILE *fp)
     
     start = ftell(fp);
     fseek(fp, 0, SEEK_SET);
-    SAFE_E(fread(header, 1, 1023, fp), 1023, "Failed to load PDF header.");
+    SAFE_E(fread(header, 1, 1023, fp), 1023, "Failed to load PDF header.\n");
     fseek(fp, start, SEEK_SET);
     
     return header;
