@@ -9,8 +9,11 @@ AC_INIT
 AC_PREFIX_DEFAULT(/usr/local)
 
 
-# Checks for programs.
+# Checks for programs, and clears CFLAGS during the check.
+X="$CFLAGS"
+CFLAGS=""
 AC_PROG_CC
+CFLAGS="$X"
 
 
 # Checks for header files.
@@ -28,14 +31,22 @@ AC_TYPE_SIZE_T
 AC_CHECK_FUNCS([strdup strtol])
 
 
+# Initialize CFLAGS.  If it is empty set optimization,
+# otherwise the user has a CFLAGS set, so use that.
+if test "xyz$CFLAGS" = "xyz"; then
+  AM_CFLAGS="-O3 -Wall"
+else
+  AM_CFLAGS="$CFLAGS"
+fi
+
+
 # Macros
-CFLAGS="$CFLAGS -Wall"
 AC_ARG_ENABLE([debug],
               [AC_HELP_STRING([--enable-debug], [Enable debugging output])],
-              [CFLAGS="$CFLAGS -O0 -g3 -DDEBUG"],
-              [CFLAGS="$CFLAGS -O3"])
+              [AM_CFLAGS=" -O0 -g3 -DDEBUG -Wall"],
+              [AM_CFLAGS+=""])
 
-AC_SUBST(CFLAGS)
+AC_SUBST([AM_CFLAGS])
 
 
 AC_FUNC_CLOSEDIR_VOID
