@@ -54,6 +54,25 @@
     ((!ferror(_fp) && !feof(_fp) && (_expr)))
 
 
+/* SAFE_E
+ *
+ * Safe expression handling.  This macro is a wrapper
+ * that compares the result of an expression (_expr) to the expected
+ * value (_cmp).
+ *
+ * _expr: Expression to test.
+ * _cmp:  Expected value, error if this returns false.
+ * _msg:  What to say when an error occurs.
+ */
+#define SAFE_E(_expr, _cmp, _msg) \
+ do {                             \
+    if ((_expr) != (_cmp)) {      \
+      ERR(_msg);                  \
+      exit(EXIT_FAILURE);         \
+    }                             \
+  } while (0)
+
+
 /*
  * Forwards
  */
@@ -215,7 +234,8 @@ int pdf_load_xrefs(FILE *fp, pdf_t *pdf)
         
         /* Suck in end of "startxref" to start of %%EOF */
         memset(buf, 0, sizeof(buf));
-        fread(buf, 1, pos_count, fp);
+        SAFE_E(fread(buf, 1, pos_count, fp), pos_count,
+               "Failed to read startxref.");
         c = buf;
         while (*c == ' ' || *c == '\n' || *c == '\r')
           ++c;
@@ -290,7 +310,7 @@ void pdf_load_pages_kids(FILE *fp, pdf_t *pdf)
             /* Get root catalog */
             sz = pdf->xrefs[i].end - ftell(fp);
             buf = malloc(sz + 1);
-            fread(buf, 1, sz, fp);
+            SAFE_E(fread(buf, 1, sz, fp), sz, "Failed to load /Root");
             buf[sz] = '\0';
             if (!(c = strstr(buf, "/Root")))
             {
@@ -564,13 +584,16 @@ static int is_valid_xref(FILE *fp, pdf_t *pdf, xref_t *xref)
     start = ftell(fp);
     fseek(fp, xref->start, SEEK_SET);
 
-    fgets(buf, 16, fp);
+    if (fgets(buf, 16, fp) == NULL) {
+      ERR("Failed to load xref string.");
+      exit(EXIT_FAILURE);
+    }
+
     if (strncmp(buf, "xref", strlen("xref")) == 0)
       is_valid = 1;
-
-    /* PDF v1.5+ allows for xref data to be stored in streams vs plaintext */
     else
     {  
+        /* PDFv1.5+ allows for xref data to be stored in streams vs plaintext */
         fseek(fp, xref->start, SEEK_SET);
         c = get_object_from_here(fp, NULL, &xref->is_stream);
 
@@ -611,9 +634,9 @@ static void load_xref_from_plaintext(FILE *fp, xref_t *xref)
       if (SAFE_F(fp, (fgetc(fp) == '/' && fgetc(fp) == 'S')))
         break;
       else
-        fseek(fp, --pos, SEEK_SET);
+        SAFE_E(fseek(fp, --pos, SEEK_SET), 0, "Failed to seek to xref /Size.");
 
-    fread(buf, 1, 21, fp);
+    SAFE_E(fread(buf, 1, 21, fp), 21, "Failed to load entry Size string.");
     xref->n_entries = atoi(buf + strlen("ize "));
     xref->entries = calloc(1, xref->n_entries * sizeof(struct _xref_entry));
 
@@ -1001,7 +1024,7 @@ static char *get_object_from_here(FILE *fp, size_t *size, int *is_stream)
 
     /* Object ID */
     memset(buf, 0, 256);
-    fread(buf, 255, 1, fp);
+    SAFE_E(fread(buf, 1, 255, fp), 255, "Failed to load object ID.");
     if (!(obj_id = atoi(buf)))
     {
         fseek(fp, start, SEEK_SET);
@@ -1240,7 +1263,7 @@ static char *get_header(FILE *fp)
     
     start = ftell(fp);
     fseek(fp, 0, SEEK_SET);
-    fread(header, 1023, 1, fp);
+    SAFE_E(fread(header, 1, 1023, fp), 1023, "Failed to load PDF header.");
     fseek(fp, start, SEEK_SET);
     
     return header;
