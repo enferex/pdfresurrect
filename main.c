@@ -71,11 +71,17 @@ static void write_version(
     power2 = 0;
     power3 = 0;
     if (xref->version > 9)
+    {
       power1 = 4;
       if (xref->version > 99)
+      {
         power2 = 4;
         if (xref->version > 999)
+        {
           power3 = 4;
+        }
+      }
+    }
     start = ftell(fp);
 
     /* Create file */
