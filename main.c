@@ -66,14 +66,23 @@ static void write_version(
     long  start;
     char *c, *new_fname, data;
     FILE *new_fp;
-    
+    int power1, power2, power3;
+    power1 = 0;
+    power2 = 0;
+    power3 = 0;
+    if (xref->version > 9)
+      power1 = 4;
+      if (xref->version > 99)
+        power2 = 4;
+        if (xref->version > 999)
+          power3 = 4;
     start = ftell(fp);
 
     /* Create file */
     if ((c = strstr(fname, ".pdf")))
       *c = '\0';
-    new_fname = malloc(strlen(fname) + strlen(dirname) + 16);
-    snprintf(new_fname, strlen(fname) + strlen(dirname) + 16,
+    new_fname = malloc(strlen(fname) + strlen(dirname) + 16 + power1 + power2 + power3);
+    snprintf(new_fname, strlen(fname) + strlen(dirname) + 16 + power1 + power2 + power3,
              "%s/%s-version-%d.pdf", dirname, fname, xref->version);
 
     if (!(new_fp = fopen(new_fname, "w")))
