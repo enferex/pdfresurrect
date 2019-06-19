@@ -439,10 +439,8 @@ void pdf_summarize(
 
     if (name)
     {
-        if ((c = strrchr(name, ".")))
-          *c = '\0';
         dst_name = malloc(strlen(name) * 2 + 16);
-        sprintf(dst_name, "%s-versions/%s", name, name);
+        sprintf(dst_name, "%s/%s", name, name);
 
         strcat(dst_name, ".summary");
         if (!(dst = fopen(dst_name, "w")))

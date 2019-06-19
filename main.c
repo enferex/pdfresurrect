@@ -85,7 +85,7 @@ static void write_version(
     start = ftell(fp);
 
     /* Create file */
-    if ((c = strrchr(fname, ".")))
+    if ((c = strrchr(fname, ".pdf")))
       *c = '\0';
     new_fname = malloc(strlen(fname) + strlen(dirname) + 16 + power1 + power2 + power3);
     snprintf(new_fname, strlen(fname) + strlen(dirname) + 16 + power1 + power2 + power3,
@@ -329,7 +329,7 @@ int main(int argc, char **argv)
     }
 
     /* Generate a per-object summary */
-    pdf_summarize(fp, pdf, name, flags);
+    pdf_summarize(fp, pdf, dname, flags);
 
     /* Have we been summoned to scrub history from this PDF */
     if (do_scrub)
