@@ -33,7 +33,7 @@
 
 #define EXEC_NAME "pdfresurrect"
 #define VER_MAJOR "0"
-#define VER_MINOR "16"
+#define VER_MINOR "17b"
 #define VER       VER_MAJOR"."VER_MINOR 
 
 
