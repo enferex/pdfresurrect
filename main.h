@@ -3,7 +3,7 @@
  *
  * pdfresurrect - PDF history extraction tool
  *
- * Copyright (C) 2008, 2009, 2010, 2012 Matt Davis (enferex).
+ * Copyright (C) 2008, 2009, 2010, 2012, 2019 Matt Davis (enferex).
  *
  * Special thanks to all of the contributors:  See AUTHORS.
  *
@@ -33,7 +33,7 @@
 
 #define EXEC_NAME "pdfresurrect"
 #define VER_MAJOR "0"
-#define VER_MINOR "16b"
+#define VER_MINOR "16"
 #define VER       VER_MAJOR"."VER_MINOR 
 
 
