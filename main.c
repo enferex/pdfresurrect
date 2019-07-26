@@ -302,7 +302,7 @@ int main(int argc, char **argv)
         else
         {
             ERR("This directory already exists, PDF version extraction will "
-                "not occur\n");
+                "not occur.\n");
             fclose(fp);
             closedir(dir);
             free(dname);
