@@ -8,3 +8,5 @@ David Binderman: Finding a bug and offering a correction suggestion
 Ryan Schmidt: MacPorts Makefile work
 
 xambroz: Suggestions and Makefile enhancement.
+
+j0lamma: Identified a bug that can cause a corrupted buffer.

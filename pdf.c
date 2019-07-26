@@ -233,6 +233,11 @@ int pdf_load_xrefs(FILE *fp, pdf_t *pdf)
           fseek(fp, pos - (++pos_count), SEEK_SET);
         
         /* Suck in end of "startxref" to start of %%EOF */
+        if (pos_count >= sizeof(buf)) {
+          ERR("Failed to locate the startxref token. "
+              "This might be a corrupt PDF.\n");
+          return -1;
+        }
         memset(buf, 0, sizeof(buf));
         SAFE_E(fread(buf, 1, pos_count, fp), pos_count,
                "Failed to read startxref.\n");
