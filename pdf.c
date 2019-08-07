@@ -658,10 +658,17 @@ static void load_xref_from_plaintext(FILE *fp, xref_t *xref)
 
         /* Collect data up until the following newline. */
         buf_idx = 0;
-        while (c != '\n' && c != '\r')
+        while (c != '\n' && c != '\r' && !feof(fp) &&
+               !ferror(fp) && buf_idx < sizeof(buf))
         {
             buf[buf_idx++] = c;
             c = fgetc(fp);
+        }
+        if (buf_idx >= sizeof(buf))
+        {
+            ERR("Failed to locate newline character. "
+                "This might be a corrupt PDF.\n");
+            exit(EXIT_FAILURE);
         }
         buf[buf_idx] = '\0';
 
