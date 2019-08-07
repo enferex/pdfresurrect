@@ -1,3 +1,9 @@
+-- Version 0.17 --
+
+2019-08-06 Matt Davis
+* pdf.c: Fix a buffer corruption bug identified by:
+         capcorpscert0188, LeeSunWoo, ParkInChul
+
 -- Version 0.16 --
 
 2019-07-25 Matt Davis
