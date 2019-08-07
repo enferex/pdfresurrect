@@ -651,11 +651,12 @@ static void load_xref_from_plaintext(FILE *fp, xref_t *xref)
     added_entries = 0;
     for (i=0; i<xref->n_entries; i++)
     {
-        /* Skip */
+        /* Advance past newlines. */
         c = fgetc(fp);
         while (c == '\n' || c == '\r')
           c = fgetc(fp);
 
+        /* Collect data up until the following newline. */
         buf_idx = 0;
         while (c != '\n' && c != '\r')
         {
