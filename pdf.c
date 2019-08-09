@@ -831,7 +831,7 @@ static pdf_creator_t *new_creator(int *n_elements)
 static void load_creator(FILE *fp, pdf_t *pdf)
 {
     int    i, buf_idx;
-    char   c, *buf, obj_id_buf[32];
+    char   c, *buf, obj_id_buf[32] = {0};
     long   start;
     size_t sz;
 
@@ -873,12 +873,11 @@ static void load_creator(FILE *fp, pdf_t *pdf)
         /* Get obj id as number */
         buf_idx = 0;
         obj_id_buf[buf_idx++] = c;
-        while (SAFE_F(fp, (!isspace(c = fgetc(fp)) && (c != '>'))))
+        while ((buf_idx < (sizeof(obj_id_buf) - 1)) &&
+               SAFE_F(fp, (!isspace(c = fgetc(fp)) && (c != '>'))))
           obj_id_buf[buf_idx++] = c;
 
         END_OF_TRAILER(c, start, fp);
-
-        obj_id_buf[buf_idx] = '\0';
      
         /* Get the object for the creator data.  If linear, try both xrefs */ 
         buf = get_object(fp, atoll(obj_id_buf), &pdf->xrefs[i], &sz, NULL);
