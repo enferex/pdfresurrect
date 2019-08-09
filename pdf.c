@@ -627,7 +627,7 @@ static void load_xref_entries(FILE *fp, xref_t *xref)
 static void load_xref_from_plaintext(FILE *fp, xref_t *xref)
 {
     int  i, buf_idx, obj_id, added_entries;
-    char c, buf[21];
+    char c, buf[32] = {0};
     long start, pos;
 
     start = ftell(fp);
