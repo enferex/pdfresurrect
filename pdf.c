@@ -861,7 +861,7 @@ static void load_creator(FILE *fp, pdf_t *pdf)
         while (SAFE_F(fp, (!isspace(c = fgetc(fp)) && (c != '>'))))
             ; /* Iterate to first white space /Info<space><data> */
 
-        /* No space between /Info and it's data */
+        /* No space between /Info and its data */
         END_OF_TRAILER(c, start, fp);
 
         while (SAFE_F(fp, (isspace(c = fgetc(fp)) && (c != '>'))))
@@ -1095,7 +1095,7 @@ static char *get_object(
     /* Jump to object start */
     fseek(fp, entry->offset, SEEK_SET);
 
-    /* Initial allocate */
+    /* Initial allocation */
     obj_sz = 0;    /* Bytes in object */
     total_sz = 0;  /* Bytes read in   */
     n_blks = 1;
