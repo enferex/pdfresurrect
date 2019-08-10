@@ -13,3 +13,5 @@ j0lamma: Identified a bug that can cause a corrupted buffer.
 
 capcorpscert0188, LeeSunWoo, ParkInChul: Identified a bug that can cause
                                          a corrupted buffer.
+
+rtfingc: Reported bugs regarding memory corruption and a leak.
