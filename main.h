@@ -40,5 +40,7 @@
 #define TAG "[pdfresurrect]"
 #define ERR(...) {fprintf(stderr, TAG" -- Error -- " __VA_ARGS__);}
 
+/* Returns a zero'd buffer of 'size' bytes or exits in failure. */
+extern void *safe_calloc(size_t bytes);
 
 #endif /* MAIN_H_INCLUDE */

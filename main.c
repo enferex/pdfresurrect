@@ -72,7 +72,7 @@ static void write_version(
     /* Create file */
     if ((c = strstr(fname, ".pdf")))
       *c = '\0';
-    new_fname = malloc(strlen(fname) + strlen(dirname) + 16);
+    new_fname = safe_calloc(strlen(fname) + strlen(dirname) + 16);
     snprintf(new_fname, strlen(fname) + strlen(dirname) + 16,
              "%s/%s-version-%d.pdf", dirname, fname, xref->version);
 
@@ -213,6 +213,23 @@ static pdf_t *init_pdf(FILE *fp, const char *name)
 }
 
 
+void *safe_calloc(size_t size) {
+  void *addr;
+
+  if (!size)
+  {
+    ERR("Invalid allocation size.\n");
+    exit(EXIT_FAILURE);
+  }
+  if (!(addr = calloc(1, size)))
+  {
+      ERR("Failed to allocate requested number of bytes, out of memory?\n");
+      exit(EXIT_FAILURE);
+  }
+  return addr;
+}
+
+
 int main(int argc, char **argv)
 {
     int         i, n_valid, do_write, do_scrub;
@@ -295,7 +312,7 @@ int main(int argc, char **argv)
         if ((c = strrchr(name, '.')))
           *c = '\0';
 
-        dname = malloc(strlen(name) + 16);
+        dname = safe_calloc(strlen(name) + 16);
         sprintf(dname, "%s-versions", name);
         if (!(dir = opendir(dname)))
           mkdir(dname, S_IRWXU);
