@@ -604,10 +604,10 @@ static int is_valid_xref(FILE *fp, pdf_t *pdf, xref_t *xref)
 
         if (c && xref->is_stream)
         {
-            free(c);
             pdf->has_xref_streams = 1;
             is_valid = 1;
         }
+        free(c);
     }
 
     fseek(fp, start, SEEK_SET);
