@@ -1111,6 +1111,10 @@ static char *get_object(
 
         if (total_sz + blk_sz >= (blk_sz * n_blks))
           data = realloc(data, blk_sz * (++n_blks));
+        if (!data) {
+          ERR("Failed to reallocate buffer.\n");
+          exit(EXIT_FAILURE);
+        }
 
         search = total_sz - read_sz;
         if (search < 0)
