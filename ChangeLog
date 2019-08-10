@@ -1,3 +1,11 @@
+-- Version 0.18 --
+
+2019-08-10 Matt Davis
+* pdf.c: Add a safe memory allocation routine (zeros and sanity checks).
+				 Free a memory leak.
+         Thanks to rtfingc for reporting the related bugs this patch
+				 addresses.
+
 -- Version 0.17 --
 
 2019-08-06 Matt Davis
