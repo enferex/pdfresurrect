@@ -763,7 +763,6 @@ static void resolve_linearized_pdf(pdf_t *pdf)
     /* Swap Linear with Version 1 */
     buf = pdf->xrefs[0];
     pdf->xrefs[0] = pdf->xrefs[1];
-    pdf->xrefs[1] = buf;
 
     /* Resolve is_linear flag and version */
     pdf->xrefs[0].is_linear = 1;
