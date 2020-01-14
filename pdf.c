@@ -679,9 +679,22 @@ static void load_xref_from_plaintext(FILE *fp, xref_t *xref)
         /* Entry or object id */
         if (strlen(buf) > 17)
         {
+            char *token_result;
             xref->entries[i].obj_id = obj_id++;
-            xref->entries[i].offset = atol(strtok(buf, " "));
-            xref->entries[i].gen_num = atoi(strtok(NULL, " "));
+            token_result = strtok(buf, " ");
+            if (!token_result)
+            {
+                ERR("failed to tokenize string\n");
+                exit(EXIT_FAILURE);
+            }
+            xref->entries[i].offset = atol(token_result);
+            token_result = strtoke(NULL, " ");
+            if (!token_result)
+            {
+                ERR("failed to tokenize string\n");
+                exit(EXIT_FAILURE);
+            }
+            xref->entries[i].gen_num = atoi(token_result);
             xref->entries[i].f_or_n = buf[17];
             ++added_entries;
         }
