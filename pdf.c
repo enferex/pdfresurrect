@@ -688,7 +688,7 @@ static void load_xref_from_plaintext(FILE *fp, xref_t *xref)
                 exit(EXIT_FAILURE);
             }
             xref->entries[i].offset = atol(token_result);
-            token_result = strtoke(NULL, " ");
+            token_result = strtok(NULL, " ");
             if (!token_result)
             {
                 ERR("failed to tokenize string\n");
