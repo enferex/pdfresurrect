@@ -1154,6 +1154,7 @@ static void add_kid(int id, xref_t *xref)
     xref->kids[xref->n_kids++] = id;
 }
 
+static int kids_count = 0;
 
 /* Recursive */
 static void load_kids(FILE *fp, int pages_id, xref_t *xref)
@@ -1161,6 +1162,13 @@ static void load_kids(FILE *fp, int pages_id, xref_t *xref)
     int   dummy, buf_idx, kid_id;
     char *data, *c, buf[32];
 
+    kids_count++;
+    if (kids_count > 1000)
+    {
+        printf("error: recursive load_kids\n");
+        exit(1);
+    }
+    
     /* Get kids */
     data = get_object(fp, pages_id, xref, NULL, &dummy);
     if (!data || !(c = strstr(data, "/Kids")))
