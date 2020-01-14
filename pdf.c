@@ -1178,6 +1178,11 @@ static void load_kids(FILE *fp, int pages_id, xref_t *xref)
     }
     
     c = strchr(c, '[');
+    if (c == NULL)
+    {
+        free(data);
+        return;
+    }
     buf_idx = 0;
     memset(buf, 0, sizeof(buf));
     while (*(++c) != ']')
