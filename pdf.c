@@ -932,6 +932,8 @@ static void load_creator_from_old_format(
     int            i, n_eles, length, is_escaped, obj_id;
     char          *c, *ascii, *start, *s, *saved_buf_search, *obj;
     pdf_creator_t *info;
+    size_t         obj_size;
+    int            loop_counter;
 
     info = new_creator(&n_eles);
 
@@ -959,12 +961,21 @@ static void load_creator_from_old_format(
             saved_buf_search = c;
             s = saved_buf_search;
 
-            obj = get_object(fp, obj_id, xref, NULL, NULL);
+            obj = get_object(fp, obj_id, xref, &obj_size, NULL);
             c = obj;
+            loop_counter = 0;
+            
+            if (obj_size == 0)
+                break;
 
             /* Iterate to '(' */
             while (c && (*c != '('))
-             ++c;
+            {
+                loop_counter++;
+                if (loop_counter > (int)obj_size)
+                    break;
+                ++c;
+            }
 
             /* Advance the search to the next token */
             while (s && (*s == '/'))
