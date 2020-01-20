@@ -948,7 +948,8 @@ static void load_creator_from_old_format(
     size_t      buf_size)
 {
     int            i, n_eles, length, is_escaped, obj_id;
-    char          *c, *ascii, *start, *s, *saved_buf_search, *obj;
+    char          *c, *ascii, *s, *saved_buf_search, *obj, *obj_start, *obj_end;
+    size_t         obj_size;
     pdf_creator_t *info;
 
     info = new_creator(&n_eles);
@@ -978,19 +979,19 @@ static void load_creator_from_old_format(
          * an object we need to fetch, and not inline
          */
         obj = saved_buf_search = NULL;
+        obj_size = 0;
         if (isdigit(*c))
         {
             obj_id = atoi(c);
             saved_buf_search = c;
             s = saved_buf_search;
 
-            obj = get_object(fp, obj_id, xref, NULL, NULL);
-            c = obj;
+            obj = get_object(fp, obj_id, xref, &obj_size, NULL);
 
             /* Iterate to '(' */
-            while (c && (*c != '(') && (c < end))
-             ++c;
-            if (c >= end)  {
+            while (obj && (*obj != '(') && (obj < end))
+             ++obj;
+            if (obj >= end)  {
               FAIL("Failed to locate a '(' character. "
                   "This might be a corrupt PDF.\n");
             }
@@ -1006,21 +1007,22 @@ static void load_creator_from_old_format(
         }
           
         /* Find the end of the value */
-        start = c;
+        obj_start = obj;
+        obj_end = obj_start + obj_size;
         length = is_escaped = 0;
-        while (c && ((*c != '\r') && (*c != '\n') && (*c != '<')))
+        while (obj && ((*obj != '\r') && (*obj != '\n') && (*obj != '<')))
         {
             /* Bail out if we see an un-escaped ')' closing character */
-            if (!is_escaped && (*c == ')'))
+            if (!is_escaped && (*obj == ')'))
               break;
-            else if (*c == '\\')
+            else if (*obj == '\\')
               is_escaped = 1;
             else
               is_escaped = 0;
 
-            ++c;
+            ++obj;
             ++length;
-            if (c <= end) {
+            if (obj <= obj_end) {
               FAIL("Failed to locate the end of a value. "
                    "This might be a corrupt PDF.\n");
             }
@@ -1033,7 +1035,7 @@ static void load_creator_from_old_format(
         if (length)
           length += 1;
         length = (length > KV_MAX_VALUE_LENGTH) ? KV_MAX_VALUE_LENGTH : length;
-        strncpy(info[i].value, start, length);
+        strncpy(info[i].value, obj_start, length);
         info[i].value[KV_MAX_VALUE_LENGTH - 1] = '\0';
 
         /* Restore where we were searching from */
