@@ -948,7 +948,7 @@ static void load_creator_from_old_format(
     size_t      buf_size)
 {
     int            i, n_eles, length, is_escaped, obj_id;
-    char          *c, *ascii, *s, *saved_buf_search, *obj, *obj_start, *obj_end;
+    char          *c, *ascii, *start, *s, *saved_buf_search, *obj;
     size_t         obj_size;
     pdf_creator_t *info;
 
@@ -956,7 +956,13 @@ static void load_creator_from_old_format(
 
     /* Mark the end of buf, so that we do not crawl past it */
     if (buf_size < 1) return;
-    const char *end = buf + buf_size - 1;
+    const char *buf_end = buf + buf_size - 1;
+
+    /* Treat 'end' as either the end of 'buf' or the end of 'obj'.  Obj is if
+     * the creator element (e.g., ModDate, Producer, etc) is an object and not
+     * part of 'buf'.
+     */
+    const char *end = buf_end;
 
     for (i=0; i<n_eles; ++i)
     {
@@ -967,7 +973,7 @@ static void load_creator_from_old_format(
         c += strlen(info[i].key);
         while (isspace(*c))
           ++c;
-        if (c >= end) {
+        if (c >= buf_end) {
           FAIL("Failed to locate space, likely a corrupt PDF.");
         }
 
@@ -980,6 +986,7 @@ static void load_creator_from_old_format(
          */
         obj = saved_buf_search = NULL;
         obj_size = 0;
+        end = buf_end; /* Init to be the buffer, this might not be an obj. */
         if (isdigit(*c))
         {
             obj_id = atoi(c);
@@ -987,19 +994,21 @@ static void load_creator_from_old_format(
             s = saved_buf_search;
 
             obj = get_object(fp, obj_id, xref, &obj_size, NULL);
+            end = obj + obj_size;
+            c = obj;
 
             /* Iterate to '(' */
-            while (obj && (*obj != '(') && (obj < end))
-             ++obj;
-            if (obj >= end)  {
+            while (c && (*c != '(') && (c < end))
+              ++c;
+            if (c >= end)  {
               FAIL("Failed to locate a '(' character. "
                   "This might be a corrupt PDF.\n");
             }
 
             /* Advance the search to the next token */
-            while (s && (*s == '/') && (s < end))
+            while (s && (*s == '/') && (s < buf_end))
               ++s;
-            if (s >= end)  {
+            if (s >= buf_end)  {
               FAIL("Failed to locate a '/' character. "
                   "This might be a corrupt PDF.\n");
             }
@@ -1007,22 +1016,20 @@ static void load_creator_from_old_format(
         }
           
         /* Find the end of the value */
-        obj_start = obj;
-        obj_end = obj_start + obj_size;
+        start = c;
         length = is_escaped = 0;
-        while (obj && ((*obj != '\r') && (*obj != '\n') && (*obj != '<')))
+        while (c && ((*c != '\r') && (*c != '\n') && (*c != '<')))
         {
             /* Bail out if we see an un-escaped ')' closing character */
-            if (!is_escaped && (*obj == ')'))
+            if (!is_escaped && (*c == ')'))
               break;
-            else if (*obj == '\\')
+            else if (*c == '\\')
               is_escaped = 1;
             else
               is_escaped = 0;
-
-            ++obj;
+            ++c;
             ++length;
-            if (obj <= obj_end) {
+            if (c > end) {
               FAIL("Failed to locate the end of a value. "
                    "This might be a corrupt PDF.\n");
             }
@@ -1035,7 +1042,7 @@ static void load_creator_from_old_format(
         if (length)
           length += 1;
         length = (length > KV_MAX_VALUE_LENGTH) ? KV_MAX_VALUE_LENGTH : length;
-        strncpy(info[i].value, obj_start, length);
+        strncpy(info[i].value, start, length);
         info[i].value[KV_MAX_VALUE_LENGTH - 1] = '\0';
 
         /* Restore where we were searching from */
