@@ -15,3 +15,5 @@ capcorpscert0188, LeeSunWoo, ParkInChul: Identified a bug that can cause
                                          a corrupted buffer.
 
 rtfingc: Reported bugs regarding memory corruption and a leak.
+
+Lithron: Reported and helped isolate bugs.
