@@ -3,7 +3,7 @@
  *
  * pdfresurrect - PDF history extraction tool
  *
- * Copyright (C) 2008-2010, 2012-2013, 2017-19, Matt Davis (enferex).
+ * Copyright (C) 2008-2010, 2012-2013, 2017-20, Matt Davis (enferex).
  *
  * Special thanks to all of the contributors:  See AUTHORS.
  *
