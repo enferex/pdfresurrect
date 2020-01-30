@@ -1180,8 +1180,13 @@ static char *get_object(
     clearerr(fp);
     fseek(fp, start, SEEK_SET);
 
-    if (size)
+    if (size) {
       *size = obj_sz;
+      if (!obj_sz && data) {
+        free(data);
+        data = NULL;
+      }
+    }
             
     if (is_stream)
       *is_stream = stream;
