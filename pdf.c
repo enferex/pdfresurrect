@@ -3,7 +3,7 @@
  *
  * pdfresurrect - PDF history extraction tool
  *
- * Copyright (C) 2008-2010, 2012-2013, 2017-19, Matt Davis (enferex).
+ * Copyright (C) 2008-2010, 2012-2013, 2017-20, Matt Davis (enferex).
  *
  * Special thanks to all of the contributors:  See AUTHORS.
  *
@@ -54,6 +54,18 @@
     ((!ferror(_fp) && !feof(_fp) && (_expr)))
 
 
+/* FAIL
+ *
+ * Emit the diagnostic '_msg' and exit.
+ * _msg: Message to emit prior to exiting.
+ */
+#define FAIL(_msg)      \
+  do {                  \
+    ERR(_msg);          \
+    exit(EXIT_FAILURE); \
+  } while (0)
+
+
 /* SAFE_E
  *
  * Safe expression handling.  This macro is a wrapper
@@ -67,8 +79,7 @@
 #define SAFE_E(_expr, _cmp, _msg) \
  do {                             \
     if ((_expr) != (_cmp)) {      \
-      ERR(_msg);                  \
-      exit(EXIT_FAILURE);         \
+      FAIL(_msg);                  \
     }                             \
   } while (0)
 
@@ -86,12 +97,17 @@ static void resolve_linearized_pdf(pdf_t *pdf);
 
 static pdf_creator_t *new_creator(int *n_elements);
 static void load_creator(FILE *fp, pdf_t *pdf);
-static void load_creator_from_buf(FILE *fp, xref_t *xref, const char *buf);
+static void load_creator_from_buf(
+    FILE       *fp,
+    xref_t     *xref,
+    const char *buf,
+    size_t      buf_size);
 static void load_creator_from_xml(xref_t *xref, const char *buf);
 static void load_creator_from_old_format(
     FILE       *fp,
     xref_t     *xref,
-    const char *buf);
+    const char *buf,
+    size_t      buf_size);
 
 static char *get_object_from_here(FILE *fp, size_t *size, int *is_stream);
 
@@ -234,9 +250,8 @@ int pdf_load_xrefs(FILE *fp, pdf_t *pdf)
         
         /* Suck in end of "startxref" to start of %%EOF */
         if (pos_count >= sizeof(buf)) {
-          ERR("Failed to locate the startxref token. "
+          FAIL("Failed to locate the startxref token. "
               "This might be a corrupt PDF.\n");
-          return -1;
         }
         memset(buf, 0, sizeof(buf));
         SAFE_E(fread(buf, 1, pos_count, fp), pos_count,
@@ -664,11 +679,9 @@ static void load_xref_from_plaintext(FILE *fp, xref_t *xref)
             buf[buf_idx++] = c;
             c = fgetc(fp);
         }
-        if (buf_idx >= sizeof(buf))
-        {
-            ERR("Failed to locate newline character. "
-                "This might be a corrupt PDF.\n");
-            exit(EXIT_FAILURE);
+        if (buf_idx >= sizeof(buf)) {
+            FAIL("Failed to locate newline character. "
+                 "This might be a corrupt PDF.\n");
         }
         buf[buf_idx] = '\0';
 
@@ -897,7 +910,7 @@ static void load_creator(FILE *fp, pdf_t *pdf)
         if (!buf && pdf->xrefs[i].is_linear && (i+1 < pdf->n_xrefs))
           buf = get_object(fp, atoll(obj_id_buf), &pdf->xrefs[i+1], &sz, NULL);
 
-        load_creator_from_buf(fp, &pdf->xrefs[i], buf);
+        load_creator_from_buf(fp, &pdf->xrefs[i], buf, sz);
         free(buf);
     }
 
@@ -905,7 +918,11 @@ static void load_creator(FILE *fp, pdf_t *pdf)
 }
 
 
-static void load_creator_from_buf(FILE *fp, xref_t *xref, const char *buf)
+static void load_creator_from_buf(
+    FILE       *fp,
+    xref_t     *xref,
+    const char *buf,
+    size_t      buf_size)
 {
     int   is_xml;
     char *c;
@@ -927,7 +944,7 @@ static void load_creator_from_buf(FILE *fp, xref_t *xref, const char *buf)
     if (is_xml)
       load_creator_from_xml(xref, buf);
     else
-      load_creator_from_old_format(fp, xref, buf);
+      load_creator_from_old_format(fp, xref, buf, buf_size);
 }
 
 
@@ -940,15 +957,27 @@ static void load_creator_from_xml(xref_t *xref, const char *buf)
 static void load_creator_from_old_format(
     FILE       *fp,
     xref_t     *xref,
-    const char *buf)
+    const char *buf,
+    size_t      buf_size)
 {
     int            i, n_eles, length, is_escaped, obj_id;
     char          *c, *ascii, *start, *s, *saved_buf_search, *obj;
+    size_t         obj_size;
     pdf_creator_t *info;
     size_t         obj_size;
     int            loop_counter;
 
     info = new_creator(&n_eles);
+
+    /* Mark the end of buf, so that we do not crawl past it */
+    if (buf_size < 1) return;
+    const char *buf_end = buf + buf_size - 1;
+
+    /* Treat 'end' as either the end of 'buf' or the end of 'obj'.  Obj is if
+     * the creator element (e.g., ModDate, Producer, etc) is an object and not
+     * part of 'buf'.
+     */
+    const char *end = buf_end;
 
     for (i=0; i<n_eles; ++i)
     {
@@ -959,6 +988,9 @@ static void load_creator_from_old_format(
         c += strlen(info[i].key);
         while (isspace(*c))
           ++c;
+        if (c >= buf_end) {
+          FAIL("Failed to locate space, likely a corrupt PDF.");
+        }
 
         /* If looking at the start of a pdf token, we have gone too far */
         if (*c == '/')
@@ -968,6 +1000,8 @@ static void load_creator_from_old_format(
          * an object we need to fetch, and not inline
          */
         obj = saved_buf_search = NULL;
+        obj_size = 0;
+        end = buf_end; /* Init to be the buffer, this might not be an obj. */
         if (isdigit(*c))
         {
             obj_id = atoi(c);
@@ -975,6 +1009,7 @@ static void load_creator_from_old_format(
             s = saved_buf_search;
 
             obj = get_object(fp, obj_id, xref, &obj_size, NULL);
+            end = obj + obj_size;
             c = obj;
             loop_counter = 0;
             
@@ -982,17 +1017,20 @@ static void load_creator_from_old_format(
                 break;
 
             /* Iterate to '(' */
-            while (c && (*c != '('))
-            {
-                loop_counter++;
-                if (loop_counter > (int)obj_size)
-                    break;
-                ++c;
+            while (c && (*c != '(') && (c < end))
+              ++c;
+            if (c >= end)  {
+              FAIL("Failed to locate a '(' character. "
+                  "This might be a corrupt PDF.\n");
             }
 
             /* Advance the search to the next token */
-            while (s && (*s == '/'))
+            while (s && (*s == '/') && (s < buf_end))
               ++s;
+            if (s >= buf_end)  {
+              FAIL("Failed to locate a '/' character. "
+                  "This might be a corrupt PDF.\n");
+            }
             saved_buf_search = s;
         }
           
@@ -1008,9 +1046,12 @@ static void load_creator_from_old_format(
               is_escaped = 1;
             else
               is_escaped = 0;
-
             ++c;
             ++length;
+            if (c > end) {
+              FAIL("Failed to locate the end of a value. "
+                   "This might be a corrupt PDF.\n");
+            }
         }
 
         if (length == 0)
@@ -1159,8 +1200,13 @@ static char *get_object(
     clearerr(fp);
     fseek(fp, start, SEEK_SET);
 
-    if (size)
+    if (size) {
       *size = obj_sz;
+      if (!obj_sz && data) {
+        free(data);
+        data = NULL;
+      }
+    }
             
     if (is_stream)
       *is_stream = stream;
