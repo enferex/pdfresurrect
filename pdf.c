@@ -964,8 +964,6 @@ static void load_creator_from_old_format(
     char          *c, *ascii, *start, *s, *saved_buf_search, *obj;
     size_t         obj_size;
     pdf_creator_t *info;
-    size_t         obj_size;
-    int            loop_counter;
 
     info = new_creator(&n_eles);
 
@@ -1011,7 +1009,6 @@ static void load_creator_from_old_format(
             obj = get_object(fp, obj_id, xref, &obj_size, NULL);
             end = obj + obj_size;
             c = obj;
-            loop_counter = 0;
             
             if (obj_size == 0)
                 break;
