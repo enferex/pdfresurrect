@@ -1055,12 +1055,13 @@ static void load_creator_from_old_format(
     } /* For all creation information tags */
 
     /* Go through the values and convert if encoded */
-    for (i=0; i<n_eles; ++i)
-      if ((ascii = decode_text_string(info[i].value, strlen(info[i].value))))
-      {
-          strncpy(info[i].value, ascii, strlen(info[i].value));
-          free(ascii);
+    for (i = 0; i < n_eles; ++i) {
+      const size_t val_str_len = strnlen(info[i].value, KV_MAX_VALUE_LENGTH);
+      if ((ascii = decode_text_string(info[i].value, val_str_len))) {
+        strncpy(info[i].value, ascii, val_str_len);
+        free(ascii);
       }
+    }
 
     xref->creator = info;
     xref->n_creator_entries = n_eles;
@@ -1340,8 +1341,8 @@ static char *decode_text_string(const char *str, size_t str_len)
     /* Regular encoding */
     if (str[0] == '(')
     {
-        ascii = safe_calloc(strlen(str) + 1);
-        strncpy(ascii, str, strlen(str) + 1);
+        ascii = safe_calloc(str_len + 1);
+        strncpy(ascii, str, str_len + 1);
         return ascii;
     }
     else if (str[0] == '<')

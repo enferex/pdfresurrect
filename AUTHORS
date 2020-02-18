@@ -1,7 +1,8 @@
 Matt Davis (enferex): Original pdfresurrect, modified man page
 
 Francois Marier: Original man page, modified Makefile.in
-                 and modified configure.ac
+                 and modified configure.ac, potential security bug identifying
+                 (e.g., bad code detection).
 
 David Binderman: Finding a bug and offering a correction suggestion
 
