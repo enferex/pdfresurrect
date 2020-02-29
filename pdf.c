@@ -1170,7 +1170,7 @@ static char *get_object(
         if ((c = strstr(data + search, "endobj")))
         {
             *(c + strlen("endobj") + 1) = '\0';
-            obj_sz = (void *)strstr(data + search, "endobj") - (void *)data;
+            obj_sz = (char *)strstr(data + search, "endobj") - (char *)data;
             obj_sz += strlen("endobj") + 1;
             break;
         }
