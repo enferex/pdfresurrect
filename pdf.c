@@ -1255,8 +1255,7 @@ static const char *get_type(FILE *fp, int obj_id, const xref_t *xref)
 {
     int          is_stream;
     char        *c, *obj, *endobj;
-    static char  buf[64];
-    static char *buf_end = &buf[sizeof(buf)-1];
+    static char  buf[32];
     long         start;
 
     start = ftell(fp);
@@ -1297,25 +1296,26 @@ static const char *get_type(FILE *fp, int obj_id, const xref_t *xref)
     while (isspace(*c) || *c == '/')
       ++c;
 
-    /* Return the value by storing it in static mem. */
-    const size_t obj_size = c - obj;
-    const size_t buf_size = sizeof(buf) - 1;
-    if (obj_size >= buf_size)
+    /* 'c' should be pointing to the type name.  Find the end of the name. */
+    size_t n_chars = 0;
+    const char *name_itr = c;
+    while ((name_itr < endobj) &&
+           !(isspace(*name_itr) || *name_itr == '/' || *name_itr == '>')) {
+        ++name_itr;
+        ++n_chars;
+    }
+    if (n_chars >= sizeof(buf))
     {
         free(obj);
         fseek(fp, start, SEEK_SET);
         return "Unknown";
     }
-    memset(buf, 0, sizeof(buf));
-    memcpy(buf, c, ((obj_size < buf_size) ? obj_size : buf_size));
-    c = buf;
-    while ((c < buf_end) && !(isspace(*c) || *c=='/' || *c=='>'))
-      ++c;
-    *c = '\0';
 
+    /* Return the value by storing it in static mem. */
+    memcpy(buf, c, n_chars);
+    buf[n_chars] = '\0';
     free(obj);
     fseek(fp, start, SEEK_SET);
-
     return buf;
 }
 
