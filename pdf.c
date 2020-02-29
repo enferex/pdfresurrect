@@ -1255,7 +1255,8 @@ static const char *get_type(FILE *fp, int obj_id, const xref_t *xref)
 {
     int          is_stream;
     char        *c, *obj, *endobj;
-    static char  buf[32];
+    static char  buf[64];
+    static char *buf_end = &buf[sizeof(buf)-1];
     long         start;
 
     start = ftell(fp);
@@ -1296,10 +1297,19 @@ static const char *get_type(FILE *fp, int obj_id, const xref_t *xref)
     while (isspace(*c) || *c == '/')
       ++c;
 
-    /* Return the value by storing it in static mem */
-    memcpy(buf, c, (((c - obj) < sizeof(buf)) ? c - obj : sizeof(buf)));
+    /* Return the value by storing it in static mem. */
+    const size_t obj_size = c - obj;
+    const size_t buf_size = sizeof(buf) - 1;
+    if (obj_size >= buf_size)
+    {
+        free(obj);
+        fseek(fp, start, SEEK_SET);
+        return "Unknown";
+    }
+    memset(buf, 0, sizeof(buf));
+    memcpy(buf, c, ((obj_size < buf_size) ? obj_size : buf_size));
     c = buf;
-    while (!(isspace(*c) || *c=='/' || *c=='>'))
+    while ((c < buf_end) && !(isspace(*c) || *c=='/' || *c=='>'))
       ++c;
     *c = '\0';
 
