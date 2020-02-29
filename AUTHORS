@@ -18,3 +18,5 @@ capcorpscert0188, LeeSunWoo, ParkInChul: Identified a bug that can cause
 rtfingc: Reported bugs regarding memory corruption and a leak.
 
 rwhitworth: Reported and helped isolate bugs. Created initial .gitignore.
+
+carter-yagemann: Reported and helped isolate a memory issue.
