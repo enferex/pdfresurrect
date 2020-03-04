@@ -20,3 +20,5 @@ rtfingc: Reported bugs regarding memory corruption and a leak.
 rwhitworth: Reported and helped isolate bugs. Created initial .gitignore.
 
 carter-yagemann: Reported and helped isolate a memory issue.
+
+rootup: Reporting and helped isolate a memory issue.

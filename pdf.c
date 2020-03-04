@@ -692,9 +692,20 @@ static void load_xref_from_plaintext(FILE *fp, xref_t *xref)
         /* Entry or object id */
         if (strlen(buf) > 17)
         {
+            const char *token = NULL;
             xref->entries[i].obj_id = obj_id++;
-            xref->entries[i].offset = atol(strtok(buf, " "));
-            xref->entries[i].gen_num = atoi(strtok(NULL, " "));
+            token = strtok(buf, " ");
+            if (!token) {
+              FAIL("Failed to parse xref entry. "
+                   "This might be a corrupt PDF.\n");
+            }
+            xref->entries[i].offset = atol(token);
+            token = strtok(NULL, " ");
+            if (!token) {
+              FAIL("Failed to parse xref entry. "
+                   "This might be a corrupt PDF.\n");
+            }
+            xref->entries[i].gen_num = atoi(token);
             xref->entries[i].f_or_n = buf[17];
             ++added_entries;
         }
