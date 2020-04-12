@@ -63,8 +63,6 @@ typedef struct _xref_entry
 } xref_entry_t;
 
 
-#define KIDS_PER_ALLOC 64
-#define KID_SIZE sizeof(int)
 typedef struct _xref_t
 {
     long start;
@@ -77,9 +75,6 @@ typedef struct _xref_t
     int n_entries;
     xref_entry_t *entries;
 
-    int  n_kids;
-    int *kids;
-    int  n_kids_allocs;
     
     /* PDF 1.5 or greater: xref can be encoded as a stream */
     int is_stream;
@@ -113,7 +108,6 @@ extern int pdf_is_pdf(FILE *fp);
 extern void pdf_get_version(FILE *fp, pdf_t *pdf);
 
 extern int pdf_load_xrefs(FILE *fp, pdf_t *pdf);
-extern void pdf_load_pages_kids(FILE *fp, pdf_t *pdf);
 
 extern char pdf_get_object_status(
     const pdf_t *pdf,

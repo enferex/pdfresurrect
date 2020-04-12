@@ -72,8 +72,8 @@ static void write_version(
     /* Create file */
     if ((c = strstr(fname, ".pdf")))
       *c = '\0';
-    new_fname = safe_calloc(strlen(fname) + strlen(dirname) + 16);
-    snprintf(new_fname, strlen(fname) + strlen(dirname) + 16,
+    new_fname = safe_calloc(strlen(fname) + strlen(dirname) + 32);
+    snprintf(new_fname, strlen(fname) + strlen(dirname) + 32,
              "%s/%s-version-%d.pdf", dirname, fname, xref->version);
 
     if (!(new_fp = fopen(new_fname, "w")))
@@ -207,7 +207,6 @@ static pdf_t *init_pdf(FILE *fp, const char *name)
       pdf_delete(pdf);
       return NULL;
     }
-    pdf_load_pages_kids(fp, pdf);
 
     return pdf;
 }

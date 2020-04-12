@@ -118,9 +118,6 @@ static char *get_object(
     size_t       *size,
     int          *is_stream);
 
-static void add_kid(int id, xref_t *xref);
-static void load_kids(FILE *fp, int pages_id, xref_t *xref);
-
 static const char *get_type(FILE *fp, int obj_id, const xref_t *xref);
 /* static int get_page(int obj_id, const xref_t *xref); */
 static char *get_header(FILE *fp);
@@ -169,7 +166,6 @@ void pdf_delete(pdf_t *pdf)
     {
         free(pdf->xrefs[i].creator);
         free(pdf->xrefs[i].entries);
-        free(pdf->xrefs[i].kids);
     }
 
     free(pdf->name);
@@ -310,55 +306,6 @@ int pdf_load_xrefs(FILE *fp, pdf_t *pdf)
 
 
 /* Load page information */
-void pdf_load_pages_kids(FILE *fp, pdf_t *pdf)
-{
-    int     i, id, dummy;
-    char   *buf, *c;
-    long    start, sz;
-
-    start = ftell(fp);
-
-    /* Load all kids for all xref tables (versions) */
-    for (i=0; i<pdf->n_xrefs; i++)
-    {
-        if (pdf->xrefs[i].version && (pdf->xrefs[i].end != 0))
-        {
-            fseek(fp, pdf->xrefs[i].start, SEEK_SET);
-            while (SAFE_F(fp, (fgetc(fp) != 't')))
-                ; /* Iterate to trailer */
-
-            /* Get root catalog */
-            sz = pdf->xrefs[i].end - ftell(fp);
-            buf = safe_calloc(sz + 1);
-            SAFE_E(fread(buf, 1, sz, fp), sz, "Failed to load /Root.\n");
-            buf[sz] = '\0';
-            if (!(c = strstr(buf, "/Root")))
-            {
-                free(buf);
-                continue;
-            }
-
-            /* Jump to catalog (root) */
-            id = atoi(c + strlen("/Root") + 1);
-            free(buf);
-            buf = get_object(fp, id, &pdf->xrefs[i], NULL, &dummy);
-            if (!buf || !(c = strstr(buf, "/Pages")))
-            {
-                free(buf);
-                continue;
-            }
-
-            /* Start at the first Pages obj and get kids */
-            id = atoi(c + strlen("/Pages") + 1);
-            load_kids(fp, id, &pdf->xrefs[i]);
-            free(buf); 
-        }
-    }
-            
-    fseek(fp, start, SEEK_SET);
-}
-
-
 char pdf_get_object_status(
     const pdf_t *pdf,
     int          xref_idx,
@@ -1208,61 +1155,6 @@ static char *get_object(
 }
 
 
-static void add_kid(int id, xref_t *xref)
-{
-    /* Make some space */
-    if (((xref->n_kids + 1) * KID_SIZE) > (xref->n_kids_allocs*KIDS_PER_ALLOC))
-      xref->kids = realloc(
-          xref->kids, (++xref->n_kids_allocs)*(KIDS_PER_ALLOC * KID_SIZE));
-
-    xref->kids[xref->n_kids++] = id;
-}
-
-
-/* Recursive */
-static void load_kids(FILE *fp, int pages_id, xref_t *xref)
-{
-    int   dummy, buf_idx, kid_id;
-    char *data, *c, buf[32];
-
-    /* Get kids */
-    data = get_object(fp, pages_id, xref, NULL, &dummy);
-    if (!data || !(c = strstr(data, "/Kids")))
-    {
-        free(data);
-        return;
-    }
-    
-    c = strchr(c, '[');
-    if (c == NULL)
-    {
-        free(data);
-        return;
-    }
-    buf_idx = 0;
-    memset(buf, 0, sizeof(buf));
-    while (*(++c) != ']')
-    {
-        if (isdigit(*c) || (*c == ' '))
-          buf[buf_idx++] = *c;
-        else if (isalpha(*c))
-        {
-            kid_id = atoi(buf);
-            add_kid(kid_id, xref);
-            buf_idx = 0;
-            memset(buf, 0, sizeof(buf));
-
-            /* Check kids of kid */
-            load_kids(fp, kid_id, xref);
-        }
-        else if (*c == ']')
-          break;
-    }
-
-    free(data);
-}
-
-
 static const char *get_type(FILE *fp, int obj_id, const xref_t *xref)
 {
     int          is_stream;
@@ -1330,20 +1222,6 @@ static const char *get_type(FILE *fp, int obj_id, const xref_t *xref)
     fseek(fp, start, SEEK_SET);
     return buf;
 }
-
-
-/* TODO
-static int get_page(int obj_id, const xref_t *xref)
-{
-    int i;
-
-    for (i=0; i<xref->n_kids; i++)
-      if (xref->kids[i] == obj_id)
-        break;
-
-    return i;
-}
-*/
 
 
 static char *get_header(FILE *fp)
