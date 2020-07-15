@@ -1,3 +1,36 @@
+-- Version 0.20 --
+* pdf.c: Make buf_idx a size_t.
+  Guard strtok access (thanks rootup).
+	Add a null check to the page load routine.
+	Add a .gitignore (thanks rwhitworth).
+	Clean up a strlen calc (thanks Francois Marier).
+	Increase the creator buffer to 64B and guard against overflow (thanks
+  carter-yagemann)
+
+-- Version 0.19 --
+* pdf.c: Add bounds guards for reading creator data.
+
+-- Version 0.18 --
+
+2019-08-10 Matt Davis
+* pdf.c: Add a safe memory allocation routine (zeros and sanity checks).
+				 Free a memory leak.
+         Thanks to rtfingc for reporting the related bugs this patch
+				 addresses.
+
+-- Version 0.17 --
+
+2019-08-06 Matt Davis
+* pdf.c: Fix a buffer corruption bug identified by:
+         capcorpscert0188, LeeSunWoo, ParkInChul
+
+-- Version 0.16 --
+
+2019-07-25 Matt Davis
+* pdf.c: Fix a buffer corruption bug identified by j0lamma.
+
+* main.c: Fix grammar in an error message.
+
 -- Version 0.15 --
 
 2018-05-08 Matt Davis <mattdavis9@gmail.com>

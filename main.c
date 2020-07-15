@@ -3,7 +3,7 @@
  *
  * pdfresurrect - PDF history extraction tool
  *
- * Copyright (C) 2008, 2009, 2010, 2012, 2017 Matt Davis (enferex).
+ * Copyright (C) 2008-2010, 2012, 2017, 2019 Matt Davis (enferex).
  *
  * Special thanks to all of the contributors:  See AUTHORS.
  *
@@ -37,7 +37,7 @@
 
 static void usage(void)
 {
-    printf(EXEC_NAME " Copyright (C) 2008, 2009, 2010, 2012, 2013, 2017 "
+    printf(EXEC_NAME " Copyright (C) 2008-2010, 2012, 2013, 2017, 2019-20 "
            "Matt Davis (enferex)\n"
            "Special thanks to all contributors and the 757 crew.\n"
            "This program comes with ABSOLUTELY NO WARRANTY\n"
@@ -87,7 +87,7 @@ static void write_version(
     /* Create file */
     if ((c = strrchr(fname, ".pdf")))
       *c = '\0';
-    new_fname = malloc(strlen(fname) + strlen(dirname) + 16 + power1 + power2 + power3);
+    new_fname = safe_calloc(strlen(fname) + strlen(dirname) + 16 + power1 + power2 + power3);
     snprintf(new_fname, strlen(fname) + strlen(dirname) + 16 + power1 + power2 + power3,
              "%s/%s-version-%d.pdf", dirname, fname, xref->version);
 
@@ -218,10 +218,29 @@ static pdf_t *init_pdf(FILE *fp, const char *name)
 
     pdf = pdf_new(name);
     pdf_get_version(fp, pdf);
-    pdf_load_xrefs(fp, pdf);
-    pdf_load_pages_kids(fp, pdf);
+    if (pdf_load_xrefs(fp, pdf) == -1) {
+      pdf_delete(pdf);
+      return NULL;
+    }
 
     return pdf;
+}
+
+
+void *safe_calloc(size_t size) {
+  void *addr;
+
+  if (!size)
+  {
+    ERR("Invalid allocation size.\n");
+    exit(EXIT_FAILURE);
+  }
+  if (!(addr = calloc(1, size)))
+  {
+      ERR("Failed to allocate requested number of bytes, out of memory?\n");
+      exit(EXIT_FAILURE);
+  }
+  return addr;
 }
 
 
@@ -307,14 +326,14 @@ int main(int argc, char **argv)
         if ((c = strrchr(name, '.')))
           *c = '\0';
 
-        dname = malloc(strlen(name) + 16);
+        dname = safe_calloc(strlen(name) + 16);
         sprintf(dname, "%s-versions", name);
         if (!(dir = opendir(dname)))
           mkdir(dname, S_IRWXU);
         else
         {
             ERR("This directory already exists, PDF version extraction will "
-                "not occur\n");
+                "not occur.\n");
             fclose(fp);
             closedir(dir);
             free(dname);
