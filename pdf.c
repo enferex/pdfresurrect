@@ -176,16 +176,13 @@ void pdf_delete(pdf_t *pdf)
 
 int pdf_is_pdf(FILE *fp)
 {
-    int   is_pdf;
     char *header;
+    if (!(header = get_header(fp)))
+      return 0;
 
-    header = get_header(fp);
-
-    if (header && strstr(header, "%PDF-"))
-      is_pdf = 1;
-    else 
-      is_pdf = 0;
-
+    /* First 1024 bytes of doc must be header (1.7 spec pg 1102) */
+    const char *c = strstr(header, "%PDF-");
+    const int is_pdf = c && ((c - header+strlen("%PDF-M.m")) < 1024);
     free(header);
     return is_pdf;
 }
@@ -193,13 +190,16 @@ int pdf_is_pdf(FILE *fp)
 
 void pdf_get_version(FILE *fp, pdf_t *pdf)
 {
-    char *header, *c;
+    char *header = get_header(fp);
 
-    header = get_header(fp);
-
-    /* Locate version string start and make sure we dont go past header */
+    /* Locate version string start and make sure we dont go past header
+     * The format is %PDF-M.m, where 'M' is the major number and 'm' minor.
+     */
+    const char *c;
     if ((c = strstr(header, "%PDF-")) && 
-        (c + strlen("%PDF-M.m") + 2))
+        ((c + 6)[0] == '.') && // Separator
+        isdigit((c + 5)[0]) && // Major number
+        isdigit((c + 7)[0]))   // Minor number
     {
         pdf->pdf_major_version = atoi(c + strlen("%PDF-"));
         pdf->pdf_minor_version = atoi(c + strlen("%PDF-M."));

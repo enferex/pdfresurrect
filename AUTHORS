@@ -24,3 +24,5 @@ carter-yagemann: Reported and helped isolate a memory issue.
 rootup: Reporting and helped isolate a memory issue.
 
 ZanderChang: Reported and identified bad code in kid page loading.
+
+yifengchen-cc: Reported a header parsing bug.
