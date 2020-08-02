@@ -3,18 +3,15 @@ pdfresurrect
 PDFResurrect is a tool aimed at analyzing PDF documents.  The PDF format allows
 for previous document changes to be retained in a more recent version of the
 document, thereby creating a running history of changes for the document.  This
-tool attempts to extract all previous versions while also producing a summary
-of changes between versions.  This tool can also "scrub" or write data over the
-original instances of PDF objects that have been modified or deleted, in an
-effort to disguise information from previous versions that might not be
-intended for anyone else to read.
+tool attempts to extract all previous versions.
 
 
 Notes
 -----
 The scrubbing feature (-s) should not be trusted for any serious security
-uses.  After using this feature, please verify that it in fact zero'd all
-of the objects that were of concern (those objects that were to be zero'd).
+uses.  After using this experimental feature, please verify that it in fact
+zero'd all of the objects that were of concern (those objects that were to be
+zero'd).  Currently this feature will likely not render a working pdf.
 
 This tool relies on the application reading the pdfresurrect extracted versions
 to treat the last xref table as the most recent in the document.  This should
