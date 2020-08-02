@@ -50,8 +50,9 @@ static void usage(void)
            "Usage: ./" EXEC_NAME " <file.pdf> [-i] [-w] [-q] [-s]\n"
            "\t -i Display PDF creator information\n"
            "\t -w Write the PDF versions and summary to disk\n"
-           "\t -q Display only the number of versions contained in the PDF\n"
-           "\t -s Scrub the previous history data from the specified PDF\n");
+           "\t -q Display only the number of versions contained in the PDF\n");
+// Experimental feature:
+//           "\t -s Scrub the previous history data from the specified PDF\n");
 
     exit(0);
 }

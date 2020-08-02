@@ -2,7 +2,7 @@
 .\" First parameter, NAME, should be all caps
 .\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
 .\" other parameters are allowed: see man(7), man(1)
-.TH PDFRESURRECT 1 "March 20, 2010"
+.TH PDFRESURRECT 1 "August 2, 2020"
 .\" Please adjust this date whenever revising the manpage.
 .\"
 .\" Some roff macros, for reference:
@@ -20,7 +20,7 @@ pdfresurrect \- tool for extracting versioning data from PDF documents
 .SH SYNOPSIS
 
 .B pdfresurrect
-.RI " file.pdf " [-w] [-q] [-s] [-i]
+.RI " file.pdf " [-w] [-q] [-i]
 .SH DESCRIPTION
 This manual page documents briefly the
 .B pdfresurrect
@@ -38,9 +38,6 @@ Write the PDF versions and summary to disk.
 .TP
 .B \-q
 Display only the number of versions contained in the PDF.
-.TP
-.B \-s
-Scrub the previous history data from the specified PDF.
 .TP
 .B \-i
 Display the creator information from the specified PDF.
@@ -88,3 +85,5 @@ contributed by Francois Marier <francois@debian.org>.
 This manual page was originally written by Francois Marier
 <francois@debian.org>, for the Debian project (and may be used by others).
 This manual page has since been modified by Matt Davis.
+.PP
+See the AUTHORS file for a list of other contributors.
