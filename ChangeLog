@@ -1,3 +1,8 @@
+-- Version 0.21 --
+* pdfresurrect.1, pdf.c, main.c: Make scrub mode (-s) experimental.
+
+* pdf.c: Update PDF header sanity check.
+
 -- Version 0.20 --
 * pdf.c: Make buf_idx a size_t.
   Guard strtok access (thanks rootup).
