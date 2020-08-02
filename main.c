@@ -101,12 +101,16 @@ static void write_version(
 }
 
 
+#ifdef PDFRESURRECT_EXPERIMENTAL
 static void scrub_document(FILE *fp, const pdf_t *pdf)
 {
     FILE *new_fp;
     int   ch, i, j, last_version ;
     char *new_name, *c;
     const char *suffix = "-scrubbed.pdf";
+
+    printf("The scrub feature (-s) is experimental and likely not to work as "
+           "expected.\n");
 
     /* Create a new name */
     if (!(new_name = malloc(strlen(pdf->name) + strlen(suffix) + 1)))
@@ -179,6 +183,7 @@ static void scrub_document(FILE *fp, const pdf_t *pdf)
     free(new_name);
     fclose(new_fp);
 }
+#endif // PDFRESURRECT_EXPERIMENTAL
 
 
 static void display_creator(FILE *fp, const pdf_t *pdf)
@@ -254,8 +259,10 @@ int main(int argc, char **argv)
           flags |= PDF_FLAG_DISP_CREATOR;
         else if (strncmp(argv[i], "-q", 2) == 0)
           flags |= PDF_FLAG_QUIET;
+#ifdef PDFRESURRECT_EXPERIMENTAL
         else if (strncmp(argv[i], "-s", 2) == 0)
           do_scrub = 1;
+#endif
         else if (argv[i][0] != '-')
           name = argv[i];
         else if (argv[i][0] == '-')
@@ -337,9 +344,11 @@ int main(int argc, char **argv)
     /* Generate a per-object summary */
     pdf_summarize(fp, pdf, dname, flags);
 
+#ifdef PDFRESURRECT_EXPERIMENTAL
     /* Have we been summoned to scrub history from this PDF */
     if (do_scrub)
       scrub_document(fp, pdf);
+#endif
 
     /* Display extra information */
     if (flags & PDF_FLAG_DISP_CREATOR)
