@@ -48,7 +48,7 @@ static void usage(void)
            "<http://www.gnu.org/licenses/gpl-3.0.txt>\n\n");
     
     printf("-- " EXEC_NAME " v" VER" --\n"
-           "Usage: ./" EXEC_NAME " <file.pdf> [-i] [-w] [-q] [-s]\n"
+           "Usage: ./" EXEC_NAME " <file.pdf> [-i] [-w] [-q]\n"
            "\t -i Display PDF creator information\n"
            "\t -w Write the PDF versions and summary to disk\n"
            "\t -q Display only the number of versions contained in the PDF\n");
