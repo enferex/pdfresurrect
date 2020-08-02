@@ -40,6 +40,7 @@ static void usage(void)
     printf(EXEC_NAME " Copyright (C) 2008-2010, 2012, 2013, 2017, 2019-20 "
            "Matt Davis (enferex)\n"
            "Special thanks to all contributors and the 757 crew.\n"
+           "See the AUTHORS file for a list of other contributors.\n"
            "This program comes with ABSOLUTELY NO WARRANTY\n"
            "This is free software, and you are welcome to redistribute it\n"
            "under certain conditions.  For details see the file 'LICENSE'\n"
