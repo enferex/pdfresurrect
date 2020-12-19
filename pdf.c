@@ -619,6 +619,9 @@ static void load_xref_from_plaintext(FILE *fp, xref_t *xref)
         while (c == '\n' || c == '\r')
           c = fgetc(fp);
 
+        if (ferror(fp) || feof(fp))
+          break;
+
         /* Collect data up until the following newline. */
         buf_idx = 0;
         while (c != '\n' && c != '\r' && !feof(fp) &&
