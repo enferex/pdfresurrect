@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.61)
+AC_PREREQ([2.70])
 AC_INIT
 
 
@@ -18,7 +18,8 @@ CFLAGS="$X"
 
 # Checks for header files.
 AC_HEADER_DIRENT
-AC_HEADER_STDC
+AC_CHECK_INCLUDES_DEFAULT
+AC_PROG_EGREP
 AC_CHECK_HEADERS([stdlib.h string.h])
 
 
@@ -42,7 +43,7 @@ fi
 
 # Macros
 AC_ARG_ENABLE([debug],
-              [AC_HELP_STRING([--enable-debug], [Enable debugging output])],
+              [AS_HELP_STRING([--enable-debug],[Enable debugging output])],
               [AM_CFLAGS=" -O0 -g3 -DDEBUG -Wall"],
               [AM_CFLAGS+=""])
 
