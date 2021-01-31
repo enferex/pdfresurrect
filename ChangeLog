@@ -1,3 +1,6 @@
+-- Version 0.22 --
+* pdf.c: Guard the xref plaintext scan.
+
 -- Version 0.21 --
 * pdfresurrect.1, pdf.c, main.c: Make scrub mode (-s) experimental.
 

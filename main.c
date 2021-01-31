@@ -3,7 +3,7 @@
  *
  * pdfresurrect - PDF history extraction tool
  *
- * Copyright (C) 2008-2010, 2012, 2017, 2019 Matt Davis (enferex).
+ * Copyright (C) 2008-2010, 2012, 2017, 2019-21 Matt Davis (enferex).
  *
  * Special thanks to all of the contributors:  See AUTHORS.
  *
@@ -37,7 +37,7 @@
 
 static void usage(void)
 {
-    printf(EXEC_NAME " Copyright (C) 2008-2010, 2012, 2013, 2017, 2019-20 "
+    printf(EXEC_NAME " Copyright (C) 2008-2010, 2012, 2013, 2017, 2019-21 "
            "Matt Davis (enferex)\n"
            "Special thanks to all contributors and the 757 crew.\n"
            "See the AUTHORS file for a list of other contributors.\n"
