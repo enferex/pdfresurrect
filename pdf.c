@@ -726,7 +726,8 @@ static void get_xref_linear_skipped(FILE *fp, xref_t *xref)
     /* If we found 'trailer' look backwards for 'xref' */
     ch = 0;
     while (SAFE_F(fp, ((ch = fgetc(fp)) != 'x')))
-      fseek(fp, -2, SEEK_CUR);
+      if (fseek(fp, -2, SEEK_CUR) == -1)
+        FAIL("Failed to locate an xref.  This might be a corrupt PDF.\n");
 
     if (ch == 'x')
     {

@@ -28,3 +28,5 @@ ZanderChang: Reported and identified bad code in kid page loading.
 yifengchen-cc: Reported a header parsing bug.
 
 kinzhong: Reported and isolated a xref scanning bug.
+
+chibataiki: Reported and isolated an infinite loop in the trailer search.
