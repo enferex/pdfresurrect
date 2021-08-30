@@ -80,7 +80,7 @@
 
 2012-11-30 Matt Davis <mattdavis9@gmail.com>
 
-* pdfresurrect.1: Less emphasis on scrubbing. 
+* pdfresurrect.1: Less emphasis on scrubbing.
 *                 Cleaned up some wording.
 
 2012-11-29 Matt Davis <mattdavis9@gmail.com>
@@ -103,14 +103,14 @@
 * Makefile.in: Add LDFLAGS macro
 *
 *              Update install and uninstall targets using DESTDIR macro
-* 
+*
 *              Update CFLAGS macro to include CPPFLAGS
 
 * configure.ac: Preserve existing CFLAGS
 
 2012-05-28 Matt Davis <mattdavis9@gmail.com>
 
-* pdf.c: Prevent invalid access and double frees when the xref table is 
+* pdf.c: Prevent invalid access and double frees when the xref table is
 *        of a zero length (thanks valgrind, oh so sexxy).
 *
 * ChangeLog: Correct a line not prefixed with an asterisk.
@@ -118,8 +118,8 @@
 2012-04-29 Matt Davis <mattdavis9@gmail.com>
 
 * pdf.c: Initialize a variable
-*        
-*        Add a macro for safe file access        
+*
+*        Add a macro for safe file access
 
 2010-03-21 Matt Davis <mattdavis9@gmail.com>
 
@@ -138,7 +138,7 @@
 
 2010-03-20 Matt Davis <mattdavis9@gmail.com>
 
-* main.c: Add additional copyright year 
+* main.c: Add additional copyright year
 
 * pdf.c: Allow for creation data to be pulled from objects as well as inline
 *        Removed strdup and used strncpy for portability purposes
@@ -187,7 +187,7 @@
 
 -- Version 0.6 --
 
-2009-05-23 Matt Davis <mattdavis9@gmail.com> and 
+2009-05-23 Matt Davis <mattdavis9@gmail.com> and
 
 * pdfresurrect.1: Added Francois Marier's man page.
 *                 Added NOTES and COPYRIGHT to man page.
@@ -203,7 +203,7 @@
 
 * pdfresurrect.1: Added Francois Marier's man page.
 
-* Makefile.in: Added Francois Marier's changes to add 
+* Makefile.in: Added Francois Marier's changes to add
 *              install, distclean, and .PHONY targets
 
 
@@ -244,4 +244,4 @@
 
 2008-08-02 Matt Davis <mattdavis9@gmail.com>
 
-* Initial public release 
+* Initial public release
