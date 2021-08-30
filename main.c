@@ -91,7 +91,7 @@ static void write_version(
     while (fread(&data, 1, 1, fp))
       fwrite(&data, 1, 1, new_fp);
 
-    /* Emit an older startxref, refering to an older version. */
+    /* Emit an older startxref, referring to an older version. */
     fprintf(new_fp, "\r\nstartxref\r\n%ld\r\n%%%%EOF", xref->start);
 
     /* Clean */
@@ -145,7 +145,7 @@ static void scrub_document(FILE *fp, const pdf_t *pdf)
     while ((ch = fgetc(fp)) != EOF)
       fputc(ch, new_fp); 
 
-    /* Find last version (dont zero these baddies) */
+    /* Find last version (don't zero these baddies) */
     last_version = 0;
     for (i=0; i<pdf->n_xrefs; i++)
       if (pdf->xrefs[i].version)
@@ -335,7 +335,7 @@ int main(int argc, char **argv)
             return -1;
         }
     
-        /* Write the pdf as a pervious version */
+        /* Write the pdf as a previous version */
         for (i=0; i<pdf->n_xrefs; i++)
           if (pdf->xrefs[i].version)
             write_version(fp, name, dname, &pdf->xrefs[i]);

@@ -192,7 +192,7 @@ void pdf_get_version(FILE *fp, pdf_t *pdf)
 {
     char *header = get_header(fp);
 
-    /* Locate version string start and make sure we dont go past header
+    /* Locate version string start and make sure we don't go past header
      * The format is %PDF-M.m, where 'M' is the major number and 'm' minor.
      */
     const char *c;
@@ -437,7 +437,7 @@ void pdf_summarize(
     if (!pdf->n_xrefs || (!n_versions && pdf->xrefs[0].is_linear))
       n_versions = 1;
 
-    /* Compare each object (if we dont have xref streams) */
+    /* Compare each object (if we don't have xref streams) */
     n_entries = 0;
     for (i=0; !(const int)pdf->has_xref_streams && i<pdf->n_xrefs; i++)
     {
@@ -687,7 +687,7 @@ static void load_xref_from_stream(FILE *fp, xref_t *xref)
     stream = get_object_from_here(fp, &size, &is_stream);
     fseek(fp, start, SEEK_SET);
 
-    /* TODO: decode and analyize stream */
+    /* TODO: decode and analyze stream */
     free(stream);
     return;
 }
