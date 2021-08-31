@@ -30,3 +30,5 @@ yifengchen-cc: Reported a header parsing bug.
 kinzhong: Reported and isolated a xref scanning bug.
 
 chibataiki: Reported and isolated an infinite loop in the trailer search.
+
+jwilk: Comment spelling corrections.
