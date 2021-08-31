@@ -31,4 +31,6 @@ kinzhong: Reported and isolated a xref scanning bug.
 
 chibataiki: Reported and isolated an infinite loop in the trailer search.
 
-jwilk: Comment spelling corrections.
+jwilk: Spelling corrections in comments.
+
+a1346054: Spacing/comment/license cleanup.
