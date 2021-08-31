@@ -1,5 +1,5 @@
 /******************************************************************************
- * main.c 
+ * main.c
  *
  * pdfresurrect - PDF history extraction tool
  *
@@ -46,7 +46,7 @@ static void usage(void)
            "under certain conditions.  For details see the file 'LICENSE'\n"
            "that came with this software or visit:\n"
            "<http://www.gnu.org/licenses/gpl-3.0.txt>\n\n");
-    
+
     printf("-- " EXEC_NAME " v" VER" --\n"
            "Usage: ./" EXEC_NAME " <file.pdf> [-i] [-w] [-q]\n"
            "\t -i Display PDF creator information\n"
@@ -68,7 +68,7 @@ static void write_version(
     long  start;
     char *c, *new_fname, data;
     FILE *new_fp;
-    
+
     start = ftell(fp);
 
     /* Create file */
@@ -85,7 +85,7 @@ static void write_version(
         free(new_fname);
         return;
     }
-    
+
     /* Copy original PDF */
     fseek(fp, 0, SEEK_SET);
     while (fread(&data, 1, 1, fp))
@@ -143,14 +143,14 @@ static void scrub_document(FILE *fp, const pdf_t *pdf)
     /* Copy */
     fseek(fp, SEEK_SET, 0);
     while ((ch = fgetc(fp)) != EOF)
-      fputc(ch, new_fp); 
+      fputc(ch, new_fp);
 
-    /* Find last version (dont zero these baddies) */
+    /* Find last version (don't zero these baddies) */
     last_version = 0;
     for (i=0; i<pdf->n_xrefs; i++)
       if (pdf->xrefs[i].version)
         last_version = pdf->xrefs[i].version;
-   
+
     /* Zero mod objects from all but the most recent version
      * Zero del objects from all versions
      */
@@ -197,7 +197,7 @@ static void display_creator(FILE *fp, const pdf_t *pdf)
     {
         if (!pdf->xrefs[i].version)
           continue;
-      
+
         if (pdf_display_creator(pdf, i))
           printf("\n");
     }
@@ -334,7 +334,7 @@ int main(int argc, char **argv)
             pdf_delete(pdf);
             return -1;
         }
-    
+
         /* Write the pdf as a previous version */
         for (i=0; i<pdf->n_xrefs; i++)
           if (pdf->xrefs[i].version)

@@ -1,5 +1,5 @@
 /******************************************************************************
- * pdf.c 
+ * pdf.c
  *
  * pdfresurrect - PDF history extraction tool
  *
@@ -32,16 +32,16 @@
 #include "main.h"
 
 
-/* 
+/*
  * Macros
  */
 
 /* SAFE_F
  *
- * Safe file read: use for fgetc() calls, this is really ugly looking. 
+ * Safe file read: use for fgetc() calls, this is really ugly looking.
  * _fp:   FILE * handle
  * _expr: The expression with fgetc() in it:
- * 
+ *
  *  example: If we get a character from the file and it is ascii character 'a'
  *           This assumes the coder wants to store the 'a' in variable ch
  *           Kinda pointless if you already know that you have 'a', but for
@@ -134,7 +134,7 @@ pdf_t *pdf_new(const char *name)
 {
     const char *n;
     pdf_t      *pdf;
-   
+
     pdf = safe_calloc(sizeof(pdf_t));
 
     if (name)
@@ -192,11 +192,11 @@ void pdf_get_version(FILE *fp, pdf_t *pdf)
 {
     char *header = get_header(fp);
 
-    /* Locate version string start and make sure we dont go past header
+    /* Locate version string start and make sure we don't go past header
      * The format is %PDF-M.m, where 'M' is the major number and 'm' minor.
      */
     const char *c;
-    if ((c = strstr(header, "%PDF-")) && 
+    if ((c = strstr(header, "%PDF-")) &&
         ((c + 6)[0] == '.') && // Separator
         isdigit((c + 5)[0]) && // Major number
         isdigit((c + 7)[0]))   // Minor number
@@ -214,7 +214,7 @@ int pdf_load_xrefs(FILE *fp, pdf_t *pdf)
     int  i, ver, is_linear;
     long pos, pos_count;
     char x, *c, buf[256];
-    
+
     c = NULL;
 
     /* Count number of xrefs */
@@ -243,7 +243,7 @@ int pdf_load_xrefs(FILE *fp, pdf_t *pdf)
         pos_count = 0;
         while (SAFE_F(fp, ((x = fgetc(fp)) != 'f')))
           fseek(fp, pos - (++pos_count), SEEK_SET);
-        
+
         /* Suck in end of "startxref" to start of %%EOF */
         if (pos_count >= sizeof(buf)) {
           FAIL("Failed to locate the startxref token. "
@@ -255,7 +255,7 @@ int pdf_load_xrefs(FILE *fp, pdf_t *pdf)
         c = buf;
         while (*c == ' ' || *c == '\n' || *c == '\r')
           ++c;
-    
+
         /* xref start position */
         pdf->xrefs[i].start = atol(c);
 
@@ -296,7 +296,7 @@ int pdf_load_xrefs(FILE *fp, pdf_t *pdf)
     if (pdf->xrefs[0].is_linear)
       resolve_linearized_pdf(pdf);
 
-    /* Ok now we have all xref data.  Go through those versions of the 
+    /* Ok now we have all xref data.  Go through those versions of the
      * PDF and try to obtain creator information
      */
     load_creator(fp, pdf);
@@ -353,7 +353,7 @@ char pdf_get_object_status(
     /* Modified */
     else if (prev->offset != curr->offset)
       return 'M';
-    
+
     return '?';
 }
 
@@ -419,7 +419,7 @@ void pdf_summarize(
             return;
         }
     }
-    
+
     /* Send output to file or stdout */
     out = (dst) ? dst : stdout;
 
@@ -437,7 +437,7 @@ void pdf_summarize(
     if (!pdf->n_xrefs || (!n_versions && pdf->xrefs[0].is_linear))
       n_versions = 1;
 
-    /* Compare each object (if we dont have xref streams) */
+    /* Compare each object (if we don't have xref streams) */
     n_entries = 0;
     for (i=0; !(const int)pdf->has_xref_streams && i<pdf->n_xrefs; i++)
     {
@@ -483,7 +483,7 @@ void pdf_summarize(
 
         fprintf(out,
                 "---------- %s ----------\n"
-                "Versions: %d\n", 
+                "Versions: %d\n",
                 pdf->name,
                 n_versions);
 
@@ -500,12 +500,12 @@ void pdf_summarize(
                * objects too.  So count em'
                */
               if (pdf->xrefs[0].is_linear)
-                n_entries += pdf->xrefs[0].n_entries; 
+                n_entries += pdf->xrefs[0].n_entries;
 
               if (pdf->xrefs[i].version && n_entries)
                 fprintf(out,
                         "Version %d -- %d objects\n",
-                        pdf->xrefs[i].version, 
+                        pdf->xrefs[i].version,
                         n_entries);
            }
     }
@@ -545,7 +545,7 @@ static int is_valid_xref(FILE *fp, pdf_t *pdf, xref_t *xref)
     int   is_valid;
     long  start;
     char *c, buf[16];
-    
+
     memset(buf, 0, sizeof(buf));
     is_valid = 0;
     start = ftell(fp);
@@ -559,7 +559,7 @@ static int is_valid_xref(FILE *fp, pdf_t *pdf, xref_t *xref)
     if (strncmp(buf, "xref", strlen("xref")) == 0)
       is_valid = 1;
     else
-    {  
+    {
         /* PDFv1.5+ allows for xref data to be stored in streams vs plaintext */
         fseek(fp, xref->start, SEEK_SET);
         c = get_object_from_here(fp, NULL, &xref->is_stream);
@@ -687,7 +687,7 @@ static void load_xref_from_stream(FILE *fp, xref_t *xref)
     stream = get_object_from_here(fp, &size, &is_stream);
     fseek(fp, start, SEEK_SET);
 
-    /* TODO: decode and analyize stream */
+    /* TODO: decode and analyze stream */
     free(stream);
     return;
 }
@@ -708,8 +708,8 @@ static void get_xref_linear_skipped(FILE *fp, xref_t *xref)
     if ((xref->end = get_next_eof(fp)) < 0)
       return;
 
-    /* Locate the trailer */ 
-    err = 0; 
+    /* Locate the trailer */
+    err = 0;
     while (!(err = ferror(fp)) && fread(buf, 1, 8, fp))
     {
         if (strncmp(buf, "trailer", strlen("trailer")) == 0)
@@ -773,7 +773,7 @@ static pdf_creator_t *new_creator(int *n_elements)
 {
     pdf_creator_t *daddy;
 
-    static const pdf_creator_t creator_template[] = 
+    static const pdf_creator_t creator_template[] =
     {
         {"Title",        ""},
         {"Author",       ""},
@@ -854,8 +854,8 @@ static void load_creator(FILE *fp, pdf_t *pdf)
           obj_id_buf[buf_idx++] = c;
 
         END_OF_TRAILER(c, start, fp);
-     
-        /* Get the object for the creator data.  If linear, try both xrefs */ 
+
+        /* Get the object for the creator data.  If linear, try both xrefs */
         buf = get_object(fp, atoll(obj_id_buf), &pdf->xrefs[i], &sz, NULL);
         if (!buf && pdf->xrefs[i].is_linear && (i+1 < pdf->n_xrefs))
           buf = get_object(fp, atoll(obj_id_buf), &pdf->xrefs[i+1], &sz, NULL);
@@ -977,7 +977,7 @@ static void load_creator_from_old_format(
             }
             saved_buf_search = s;
         }
-          
+
         /* Find the end of the value */
         start = c;
         length = is_escaped = 0;
@@ -1052,7 +1052,7 @@ static char *get_object_from_here(FILE *fp, size_t *size, int *is_stream)
         fseek(fp, start, SEEK_SET);
         return NULL;
     }
-    
+
     /* Create xref entry to pass to the get_object routine */
     memset(&entry, 0, sizeof(xref_entry_t));
     entry.obj_id = obj_id;
@@ -1151,7 +1151,7 @@ static char *get_object(
         data = NULL;
       }
     }
-            
+
     if (is_stream)
       *is_stream = stream;
 
@@ -1168,7 +1168,7 @@ static const char *get_type(FILE *fp, int obj_id, const xref_t *xref)
 
     start = ftell(fp);
 
-    if (!(obj = get_object(fp, obj_id, xref, NULL, &is_stream)) || 
+    if (!(obj = get_object(fp, obj_id, xref, NULL, &is_stream)) ||
         is_stream                                               ||
         !(endobj = strstr(obj, "endobj")))
     {
@@ -1259,9 +1259,9 @@ static char *decode_text_string(const char *str, size_t str_len)
         is_hex = 1;
         ++idx;
     }
-    
+
     /* Text strings can be either PDFDocEncoding or UTF-16BE */
-    if (is_hex && (str_len > 5) && 
+    if (is_hex && (str_len > 5) &&
         (str[idx] == 'F') && (str[idx+1] == 'E') &&
         (str[idx+2] == 'F') && (str[idx+3] == 'F'))
     {

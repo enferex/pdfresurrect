@@ -1,5 +1,5 @@
 /******************************************************************************
- * pdf.h 
+ * pdf.h
  *
  * pdfresurrect - PDF history extraction tool
  *
@@ -48,7 +48,7 @@ typedef struct _kv_t
 } kv_t;
 
 
-/* Information about who/what created the PDF 
+/* Information about who/what created the PDF
  * From 1.7 Spec for non-metadata entries
  */
 typedef kv_t pdf_creator_t;
@@ -58,7 +58,7 @@ typedef struct _xref_entry
 {
     int obj_id;
     long offset;
-    int gen_num; 
+    int gen_num;
     char f_or_n;
 } xref_entry_t;
 
@@ -68,20 +68,20 @@ typedef struct _xref_t
     long start;
     long end;
 
-    /* Array of metadata about the pdf */    
+    /* Array of metadata about the pdf */
     pdf_creator_t *creator;
     int n_creator_entries;
 
     int n_entries;
     xref_entry_t *entries;
 
-    
+
     /* PDF 1.5 or greater: xref can be encoded as a stream */
     int is_stream;
-    
+
     /* If the PDF is linear multiple xrefs make up one single version */
     int is_linear;
-    
+
     /* Version of the document this xref belongs */
     int version;
 } xref_t;
@@ -95,7 +95,7 @@ typedef struct _pdf_t
 
     int     n_xrefs;
     xref_t *xrefs;
-    
+
     /* PDF 1.5 or greater: xref can be encoded as a stream */
     int has_xref_streams;
 } pdf_t;
