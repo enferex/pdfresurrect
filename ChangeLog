@@ -3,6 +3,8 @@
 
 * pdf.c: Fix potential infinite loop from unchecked fseek.
 
+* pdfresurrect.1: Remove note about the scrubbing feature.
+
 -- Version 0.22 --
 * pdf.c: Guard the xref plaintext scan.
 
