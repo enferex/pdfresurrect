@@ -2,27 +2,15 @@
  * pdf.c
  *
  * pdfresurrect - PDF history extraction tool
+ * https://github.com/enferex/pdfresurrect
  *
- * Copyright (C) 2008-2010, 2012-2013, 2017-20, Matt Davis (enferex).
+ * See https://github.com/enferex/pdfresurrect/blob/master/LICENSE for license
+ * information.
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Special thanks to all of the contributors:  See AUTHORS.
- *
  * Special thanks to 757labs (757 crew), they are a great group
  * of people to hack on projects and brainstorm with.
- *
- * pdf.c is part of pdfresurrect.
- * pdfresurrect is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * pdfresurrect is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with pdfresurrect.  If not, see <http://www.gnu.org/licenses/>.
  *****************************************************************************/
 
 #include <stdlib.h>

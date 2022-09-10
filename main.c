@@ -2,27 +2,15 @@
  * main.c
  *
  * pdfresurrect - PDF history extraction tool
+ * https://github.com/enferex/pdfresurrect
  *
- * Copyright (C) 2008-2010, 2012, 2017, 2019-21 Matt Davis (enferex).
+ * See https://github.com/enferex/pdfresurrect/blob/master/LICENSE for license
+ * information.
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Special thanks to all of the contributors:  See AUTHORS.
- *
  * Special thanks to 757labs (757 crew), they are a great group
  * of people to hack on projects and brainstorm with.
- *
- * main.c is part of pdfresurrect.
- * pdfresurrect is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * pdfresurrect is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with pdfresurrect.  If not, see <http://www.gnu.org/licenses/>.
  *****************************************************************************/
 
 #include <stdio.h>
@@ -37,16 +25,6 @@
 
 static void usage(void)
 {
-    printf(EXEC_NAME " Copyright (C) 2008-2010, 2012, 2013, 2017, 2019-21 "
-           "Matt Davis (enferex)\n"
-           "Special thanks to all contributors and the 757 crew.\n"
-           "See the AUTHORS file for a list of other contributors.\n"
-           "This program comes with ABSOLUTELY NO WARRANTY\n"
-           "This is free software, and you are welcome to redistribute it\n"
-           "under certain conditions.  For details see the file 'LICENSE'\n"
-           "that came with this software or visit:\n"
-           "<http://www.gnu.org/licenses/gpl-3.0.txt>\n\n");
-
     printf("-- " EXEC_NAME " v" VER" --\n"
            "Usage: ./" EXEC_NAME " <file.pdf> [-i] [-w] [-q]\n"
            "\t -i Display PDF creator information\n"
@@ -54,7 +32,6 @@ static void usage(void)
            "\t -q Display only the number of versions contained in the PDF\n");
 // Experimental feature:
 //           "\t -s Scrub the previous history data from the specified PDF\n");
-
     exit(0);
 }
 

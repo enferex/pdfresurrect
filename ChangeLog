@@ -1,3 +1,8 @@
+-- Version 0.23 --
+* Changed license from GPLv3 to BSD 3-Clause.
+
+* pdf.c: Fix potential infinite loop from unchecked fseek.
+
 -- Version 0.22 --
 * pdf.c: Guard the xref plaintext scan.
 
